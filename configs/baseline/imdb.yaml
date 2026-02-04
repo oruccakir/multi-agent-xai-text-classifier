@@ -2,7 +2,7 @@
 # Train all traditional ML models on IMDB sentiment dataset
 
 experiment:
-  name: "imdb_baseline"
+  name: "baseline"
   description: "Baseline experiment for IMDB sentiment classification"
   author: "Oruç Çakır"
 

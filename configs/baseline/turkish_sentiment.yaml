@@ -2,7 +2,7 @@
 # Train all traditional ML models on Turkish sentiment dataset
 
 experiment:
-  name: "turkish_sentiment_baseline"
+  name: "baseline"
   description: "Baseline experiment for Turkish sentiment classification"
   author: "Oruç Çakır"
 
