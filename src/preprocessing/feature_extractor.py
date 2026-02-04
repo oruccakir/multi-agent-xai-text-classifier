@@ -1,5 +1,7 @@
 """Feature extraction methods: TF-IDF and Transformer embeddings."""
 
+import pickle
+from pathlib import Path
 from typing import List
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -82,3 +84,26 @@ class FeatureExtractor:
         if self.method == "tfidf" and self.vectorizer is not None:
             return self.vectorizer.get_feature_names_out().tolist()
         return []
+
+    def get_vocabulary_size(self) -> int:
+        """Get the size of the vocabulary."""
+        if self.method == "tfidf" and self.vectorizer is not None:
+            return len(self.vectorizer.vocabulary_)
+        return 0
+
+    def save(self, path: str) -> None:
+        """Save the feature extractor to disk."""
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(path, "wb") as f:
+            pickle.dump(self, f)
+        print(f"Feature extractor saved to {path}")
+
+    @classmethod
+    def load(cls, path: str) -> "FeatureExtractor":
+        """Load a feature extractor from disk."""
+        with open(path, "rb") as f:
+            extractor = pickle.load(f)
+        print(f"Feature extractor loaded from {path}")
+        return extractor
