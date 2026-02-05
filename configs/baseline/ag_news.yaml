@@ -34,6 +34,7 @@ feature_extraction:
   min_df: 2
   max_df: 0.95
   sublinear_tf: true
+  sparse: false  # Use sparse matrix format (recommended for memory efficiency)
 
 # Models to train
 models:
@@ -55,10 +56,10 @@ models:
   knn:
     enabled: true
     n_neighbors: 5
-    metric: "cosine"
+    metric: "euclidean"
     weights: "distance"
-    n_jobs: 1  # Single thread to prevent memory explosion
-    algorithm: "brute"  # Required for cosine metric
+    n_jobs: 1
+    algorithm: "ball_tree"
 
   logistic_regression:
     enabled: true

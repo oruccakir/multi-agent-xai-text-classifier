@@ -46,6 +46,28 @@ MODEL_ICONS = {
 }
 
 
+def get_model_results(results: dict) -> dict:
+    """Extract model results from experiment results, handling both formats.
+
+    - Script format: results["results"]
+    - UI format: results["models"]
+    """
+    # Try "results" first (script format), then "models" (UI format)
+    return results.get("results", results.get("models", {}))
+
+
+def get_classes(results: dict) -> list:
+    """Extract class names from experiment results, handling both formats.
+
+    - Script format: results["dataset"]["classes"]
+    - UI format: results["classes"]
+    """
+    dataset_info = results.get("dataset", {})
+    if isinstance(dataset_info, dict):
+        return dataset_info.get("classes", [])
+    return results.get("classes", [])
+
+
 def get_available_experiments():
     """Get list of available experiments."""
     experiments = []
@@ -227,7 +249,7 @@ def display_confusion_matrices(results: dict):
     """Display confusion matrices for all models."""
     st.markdown("### 🔢 Confusion Matrices")
 
-    model_results = results.get("results", {})
+    model_results = get_model_results(results)
     num_models = len(model_results)
 
     if num_models == 0:
@@ -236,13 +258,13 @@ def display_confusion_matrices(results: dict):
 
     # Create grid of confusion matrices
     cols = st.columns(min(3, num_models))
+    classes = get_classes(results) or ["Class 0", "Class 1"]
 
     for i, (model_name, model_data) in enumerate(model_results.items()):
         if "confusion_matrix" not in model_data:
             continue
 
         cm = np.array(model_data["confusion_matrix"])
-        classes = results.get("dataset", {}).get("classes", ["Class 0", "Class 1"])
 
         icon = MODEL_ICONS.get(model_name, "📦")
         display_name = MODEL_DISPLAY_NAMES.get(model_name, model_name)
@@ -268,8 +290,8 @@ def display_classification_reports(results: dict):
     """Display per-class metrics for each model."""
     st.markdown("### 📈 Per-Class Performance")
 
-    model_results = results.get("results", {})
-    classes = results.get("dataset", {}).get("classes", [])
+    model_results = get_model_results(results)
+    classes = get_classes(results)
 
     if not classes:
         return
@@ -373,11 +395,22 @@ def main():
     with col1:
         st.metric("Experiment", config.get("experiment", {}).get("name", "Unknown"))
     with col2:
-        st.metric("Dataset", config.get("dataset", {}).get("name", "Unknown"))
+        # Handle both formats: dataset as dict with name, or just name string
+        dataset_info = config.get("dataset", {})
+        dataset_name = dataset_info.get("name", dataset_info) if isinstance(dataset_info, dict) else dataset_info
+        st.metric("Dataset", dataset_name or "Unknown")
     with col3:
-        st.metric("Language", config.get("dataset", {}).get("language", "Unknown").upper())
+        # Language can be in dataset (script) or preprocessing (UI)
+        language = (
+            config.get("dataset", {}).get("language") or
+            config.get("preprocessing", {}).get("language") or
+            "Unknown"
+        )
+        st.metric("Language", language.upper())
     with col4:
-        st.metric("Task", config.get("dataset", {}).get("task", "Unknown").replace("_", " ").title())
+        # Task is only in script format
+        task = config.get("dataset", {}).get("task", "classification")
+        st.metric("Task", task.replace("_", " ").title())
 
     # Experiment info
     exp_info = config.get("experiment", {})

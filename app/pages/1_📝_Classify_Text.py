@@ -44,6 +44,20 @@ MODELS_DIR = project_root / "data" / "models"
 # Available models
 AVAILABLE_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression"]
 
+# Example texts for quick testing
+EXAMPLE_TEXTS = {
+    "imdb": "This movie was absolutely fantastic! The acting was superb and the plot kept me engaged throughout.",
+    "turkish_sentiment": "Bu ürün gerçekten harika, kesinlikle tavsiye ederim! Kargo çok hızlı geldi.",
+    "ag_news": "Apple Inc. announced record quarterly earnings, with iPhone sales exceeding analyst expectations by 15%.",
+    "turkish_news": "Galatasaray, Süper Lig'in 25. haftasında Fenerbahçe'yi 2-1 mağlup ederek liderliğini sürdürdü.",
+}
+
+
+def set_example_text(example_key: str):
+    """Callback to set example text in session state."""
+    # Set the widget's key directly - this works because callback runs BEFORE widget is rendered on rerun
+    st.session_state.text_input = EXAMPLE_TEXTS[example_key]
+
 MODEL_DISPLAY_NAMES = {
     "naive_bayes": "Naive Bayes",
     "svm": "SVM",
@@ -317,6 +331,7 @@ def main():
 
     with col1:
         st.markdown("### Enter Text")
+
         text_input = st.text_area(
             "Type or paste your text here:",
             height=150,
@@ -324,27 +339,37 @@ def main():
             key="text_input",
         )
 
-        # Example texts
+        # Example texts with callbacks
         st.markdown("**Quick Examples:**")
         example_col1, example_col2 = st.columns(2)
 
         with example_col1:
-            if st.button("🎬 IMDB Example", use_container_width=True):
-                st.session_state.text_input = "This movie was absolutely fantastic! The acting was superb and the plot kept me engaged throughout."
-                st.rerun()
-
-            if st.button("🇹🇷 Turkish Sentiment", use_container_width=True):
-                st.session_state.text_input = "Bu ürün gerçekten harika, kesinlikle tavsiye ederim! Kargo çok hızlı geldi."
-                st.rerun()
+            st.button(
+                "🎬 IMDB Example",
+                use_container_width=True,
+                on_click=set_example_text,
+                args=("imdb",),
+            )
+            st.button(
+                "🇹🇷 Turkish Sentiment",
+                use_container_width=True,
+                on_click=set_example_text,
+                args=("turkish_sentiment",),
+            )
 
         with example_col2:
-            if st.button("📰 AG News Example", use_container_width=True):
-                st.session_state.text_input = "Apple Inc. announced record quarterly earnings, with iPhone sales exceeding analyst expectations by 15%."
-                st.rerun()
-
-            if st.button("🇹🇷 Turkish News", use_container_width=True):
-                st.session_state.text_input = "Galatasaray, Süper Lig'in 25. haftasında Fenerbahçe'yi 2-1 mağlup ederek liderliğini sürdürdü."
-                st.rerun()
+            st.button(
+                "📰 AG News Example",
+                use_container_width=True,
+                on_click=set_example_text,
+                args=("ag_news",),
+            )
+            st.button(
+                "🇹🇷 Turkish News",
+                use_container_width=True,
+                on_click=set_example_text,
+                args=("turkish_news",),
+            )
 
     with col2:
         st.markdown("### Classification Info")

@@ -37,6 +37,20 @@ MODELS_DIR = project_root / "data" / "models"
 # Available models
 AVAILABLE_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression"]
 
+# Example texts for quick testing
+COMPARISON_EXAMPLES = {
+    "en_positive": "This movie was absolutely fantastic! The acting was superb and the plot kept me engaged throughout. Highly recommended!",
+    "tr_positive": "Bu ürün gerçekten harika, kesinlikle tavsiye ederim! Kargo çok hızlı geldi ve kalitesi mükemmel.",
+    "en_negative": "Terrible movie. Waste of time and money. The acting was awful and the story made no sense at all.",
+    "tr_negative": "Bu ürün berbat, kesinlikle almayın. Kalitesiz ve pahalı. Çok hayal kırıklığına uğradım.",
+}
+
+
+def set_comparison_example(example_key: str):
+    """Callback to set example text in session state."""
+    # Set the widget's key directly - this works because callback runs BEFORE widget is rendered on rerun
+    st.session_state.comparison_text = COMPARISON_EXAMPLES[example_key]
+
 # Model information
 MODELS = {
     "naive_bayes": {
@@ -253,27 +267,37 @@ def main():
             key="comparison_text",
         )
 
-        # Example buttons
+        # Example buttons with callbacks
         st.markdown("**Quick Examples:**")
         example_col1, example_col2 = st.columns(2)
 
         with example_col1:
-            if st.button("🎬 English Positive", use_container_width=True):
-                st.session_state.comparison_text = "This movie was absolutely fantastic! The acting was superb and the plot kept me engaged throughout. Highly recommended!"
-                st.rerun()
-
-            if st.button("🇹🇷 Turkish Positive", use_container_width=True):
-                st.session_state.comparison_text = "Bu ürün gerçekten harika, kesinlikle tavsiye ederim! Kargo çok hızlı geldi ve kalitesi mükemmel."
-                st.rerun()
+            st.button(
+                "🎬 English Positive",
+                use_container_width=True,
+                on_click=set_comparison_example,
+                args=("en_positive",),
+            )
+            st.button(
+                "🇹🇷 Turkish Positive",
+                use_container_width=True,
+                on_click=set_comparison_example,
+                args=("tr_positive",),
+            )
 
         with example_col2:
-            if st.button("🎬 English Negative", use_container_width=True):
-                st.session_state.comparison_text = "Terrible movie. Waste of time and money. The acting was awful and the story made no sense at all."
-                st.rerun()
-
-            if st.button("🇹🇷 Turkish Negative", use_container_width=True):
-                st.session_state.comparison_text = "Çok kötü bir ürün, kesinlikle almayın. Para çöpe gitti, hiç memnun kalmadım."
-                st.rerun()
+            st.button(
+                "🎬 English Negative",
+                use_container_width=True,
+                on_click=set_comparison_example,
+                args=("en_negative",),
+            )
+            st.button(
+                "🇹🇷 Turkish Negative",
+                use_container_width=True,
+                on_click=set_comparison_example,
+                args=("tr_negative",),
+            )
 
     with col2:
         st.markdown("### Current Settings")

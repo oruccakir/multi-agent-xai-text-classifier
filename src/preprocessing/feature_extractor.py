@@ -37,6 +37,7 @@ class FeatureExtractor:
                 ngram_range=kwargs.get("ngram_range", (1, 2)),
                 min_df=kwargs.get("min_df", 2),
                 max_df=kwargs.get("max_df", 0.95),
+                sublinear_tf=kwargs.get("sublinear_tf", True),
             )
         elif self.method == "transformer":
             # Will be initialized lazily when needed
@@ -52,17 +53,39 @@ class FeatureExtractor:
             self._load_transformer_model()
         return self
 
-    def transform(self, texts: List[str]) -> np.ndarray:
-        """Transform texts to feature vectors."""
+    def transform(self, texts: List[str], sparse: bool = True):
+        """
+        Transform texts to feature vectors.
+
+        Args:
+            texts: List of texts to transform
+            sparse: If True, return sparse matrix (memory efficient for large datasets).
+                    If False, return dense numpy array.
+
+        Returns:
+            Sparse matrix or dense numpy array of features
+        """
         if self.method == "tfidf":
-            return self.vectorizer.transform(texts).toarray()
+            features = self.vectorizer.transform(texts)
+            if sparse:
+                return features  # Keep as sparse matrix
+            return features.toarray()  # Convert to dense only when requested
         elif self.method == "transformer":
             return self._encode_with_transformer(texts)
 
-    def fit_transform(self, texts: List[str]) -> np.ndarray:
-        """Fit and transform in one step."""
+    def fit_transform(self, texts: List[str], sparse: bool = True):
+        """
+        Fit and transform in one step.
+
+        Args:
+            texts: List of texts to fit and transform
+            sparse: If True, return sparse matrix (memory efficient)
+
+        Returns:
+            Sparse matrix or dense numpy array of features
+        """
         self.fit(texts)
-        return self.transform(texts)
+        return self.transform(texts, sparse=sparse)
 
     def _load_transformer_model(self) -> None:
         """Load the Sentence-BERT model."""

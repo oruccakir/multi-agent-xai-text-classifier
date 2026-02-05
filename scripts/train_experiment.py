@@ -137,16 +137,19 @@ def run_experiment(config_path: str) -> Dict[str, Any]:
     print(f"\n  Extracting features (method: {fe_config['method']})...")
 
     start_time = time.time()
+    use_sparse = fe_config.get("sparse", True)
+
     feature_extractor = FeatureExtractor(
         method=fe_config["method"],
         max_features=fe_config.get("max_features", 10000),
         ngram_range=tuple(fe_config.get("ngram_range", [1, 2])),
         min_df=fe_config.get("min_df", 2),
         max_df=fe_config.get("max_df", 0.95),
+        sublinear_tf=fe_config.get("sublinear_tf", True),
     )
 
-    X_train = feature_extractor.fit_transform(X_train_text)
-    X_test = feature_extractor.transform(X_test_text)
+    X_train = feature_extractor.fit_transform(X_train_text, sparse=use_sparse)
+    X_test = feature_extractor.transform(X_test_text, sparse=use_sparse)
     feature_time = time.time() - start_time
 
     print(f"  Feature extraction completed in {feature_time:.2f}s")
