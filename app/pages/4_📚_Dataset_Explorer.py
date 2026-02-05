@@ -79,14 +79,11 @@ def main():
     cols = st.columns(4)
     for i, (key, info) in enumerate(DATASETS.items()):
         with cols[i]:
-            st.markdown(f"""
-            <div style="background-color: #f0f2f6; border-radius: 10px; padding: 1rem; text-align: center; height: 180px;">
-                <h2>{info['icon']}</h2>
-                <h4>{info['name']}</h4>
-                <p style="color: #1E88E5;">{info['language']} | {info['task']}</p>
-                <p style="font-size: 0.8rem; color: #666;">{len(info['classes'])} classes</p>
-            </div>
-            """, unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown(f"### {info['icon']}")
+                st.markdown(f"**{info['name']}**")
+                st.caption(f"{info['language']} | {info['task']}")
+                st.caption(f"{len(info['classes'])} classes")
 
     st.divider()
 

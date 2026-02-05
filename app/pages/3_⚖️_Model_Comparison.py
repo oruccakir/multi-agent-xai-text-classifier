@@ -1,19 +1,28 @@
 """
 Model Comparison Page
-Compare all 6 classification models on the same input.
+Compare all classification models on the same input using the Classification Agent.
 """
 
 import streamlit as st
 import sys
+import os
 from pathlib import Path
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import time
+from dotenv import load_dotenv
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
+
+# Load environment variables
+load_dotenv(project_root / ".env.example")
+load_dotenv(project_root / ".env", override=True)
+
+from src.agents.intent_classifier import IntentClassifierAgent
+from src.agents.classification_agent import ClassificationAgent
 
 # Page configuration
 st.set_page_config(
@@ -21,6 +30,12 @@ st.set_page_config(
     page_icon="⚖️",
     layout="wide",
 )
+
+# Model directory
+MODELS_DIR = project_root / "data" / "models"
+
+# Available models
+AVAILABLE_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression"]
 
 # Model information
 MODELS = {
@@ -54,81 +69,174 @@ MODELS = {
         "description": "Linear model with sigmoid activation for probabilities",
         "icon": "📈",
     },
-    "transformer": {
-        "name": "Transformer",
-        "type": "Deep Learning",
-        "description": "BERT-based model with attention mechanism",
-        "icon": "🤖",
-    },
 }
 
+# Initialize session state
+if "gemini_api_key" not in st.session_state:
+    st.session_state.gemini_api_key = os.getenv("GEMINI_API_KEY", "")
 
-def simulate_model_comparison(text: str, dataset: str) -> dict:
-    """Simulate predictions from all models."""
-    import random
 
-    # Define classes based on dataset
-    if dataset == "imdb":
-        classes = ["negative", "positive"]
-    elif dataset == "turkish_sentiment":
-        classes = ["negatif", "notr", "pozitif"]
-    elif dataset == "ag_news":
-        classes = ["World", "Sports", "Business", "Sci/Tech"]
-    else:
-        classes = ["siyaset", "dünya", "ekonomi", "kültür", "sağlık", "spor", "teknoloji"]
+def get_available_experiments():
+    """Get list of available experiments (top-level directories in models folder)."""
+    experiments = []
+    if MODELS_DIR.exists():
+        for exp_dir in sorted(MODELS_DIR.iterdir()):
+            if exp_dir.is_dir() and not exp_dir.name.startswith('.'):
+                # Check if it has any dataset subdirectories with models
+                has_models = False
+                for dataset_dir in exp_dir.iterdir():
+                    if dataset_dir.is_dir() and (dataset_dir / "feature_extractor.pkl").exists():
+                        has_models = True
+                        break
+                if has_models:
+                    experiments.append({
+                        "name": exp_dir.name,
+                        "path": exp_dir,
+                    })
+    return experiments
+
+
+def get_available_datasets_for_experiment(exp_path: Path):
+    """Get list of datasets available in an experiment."""
+    datasets = []
+    for dataset_dir in sorted(exp_path.iterdir()):
+        if dataset_dir.is_dir() and (dataset_dir / "feature_extractor.pkl").exists():
+            datasets.append(dataset_dir.name)
+    return datasets
+
+
+def get_available_models_for_dataset(exp_path: Path, dataset: str):
+    """Get list of trained models for a dataset within an experiment."""
+    available = []
+    dataset_path = exp_path / dataset
+    if dataset_path.exists():
+        for model_name in AVAILABLE_MODELS:
+            if (dataset_path / f"{model_name}.pkl").exists():
+                available.append(model_name)
+    return available
+
+
+# Initialize agents as singletons
+@st.cache_resource
+def get_intent_classifier_agent(api_key: str = None):
+    """Get or create Intent Classifier agent."""
+    return IntentClassifierAgent(api_key=api_key if api_key else None)
+
+
+@st.cache_resource
+def get_classification_agent():
+    """Get or create Classification agent."""
+    return ClassificationAgent()
+
+
+def compare_models(text: str, exp_path: Path, dataset: str, language: str) -> dict:
+    """Run all available models on the text and return results."""
+    classification_agent = get_classification_agent()
+
+    # Get available models
+    available_models = get_available_models_for_dataset(exp_path, dataset)
 
     results = {}
+    for model_name in available_models:
+        # Time the prediction
+        start_time = time.time()
 
-    for model_key in MODELS.keys():
-        # Use different seeds for different models
-        random.seed(hash(text + model_key) % 2**32)
+        result = classification_agent.classify_text(
+            text=text,
+            experiment_path=str(exp_path),
+            dataset=dataset,
+            model_name=model_name,
+            language=language,
+        )
 
-        # Generate probabilities
-        probs = [random.random() for _ in classes]
-        total = sum(probs)
-        probs = [p / total for p in probs]
+        pred_time = time.time() - start_time
 
-        max_idx = probs.index(max(probs))
-        prediction = classes[max_idx]
-        confidence = probs[max_idx]
-
-        # Simulate processing time
-        if model_key == "transformer":
-            proc_time = random.uniform(0.8, 1.5)
-        elif model_key in ["svm", "random_forest"]:
-            proc_time = random.uniform(0.1, 0.3)
-        else:
-            proc_time = random.uniform(0.01, 0.1)
-
-        results[model_key] = {
-            "prediction": prediction,
-            "confidence": confidence,
-            "probabilities": dict(zip(classes, probs)),
-            "processing_time": proc_time,
-        }
+        if "error" not in result or result.get("prediction") is not None:
+            results[model_name] = {
+                "prediction": result["prediction"],
+                "confidence": result["confidence"],
+                "probabilities": result["probabilities"],
+                "processing_time": pred_time,
+            }
 
     return results
 
 
 def main():
     st.title("⚖️ Model Comparison")
-    st.markdown("Compare all 6 classification models on the same input")
+    st.markdown("Compare all trained models using the Classification Agent")
+
+    # Get available experiments
+    experiments = get_available_experiments()
+
+    if not experiments:
+        st.error("No trained experiments found! Please run training first:")
+        st.code("python scripts/train_experiment.py --config configs/baseline/imdb.yaml", language="bash")
+        return
+
+    # Sidebar for experiment selection
+    with st.sidebar:
+        st.markdown("## 🔬 Experiment Selection")
+
+        exp_options = {exp["name"]: exp for exp in experiments}
+        selected_exp_name = st.selectbox(
+            "Select Experiment:",
+            options=list(exp_options.keys()),
+            format_func=lambda x: f"📁 {x}",
+        )
+        selected_exp = exp_options[selected_exp_name]
+
+        # Show available datasets in this experiment
+        available_datasets = get_available_datasets_for_experiment(selected_exp["path"])
+
+        st.divider()
+        st.markdown("## 📊 Available Datasets")
+        for ds in available_datasets:
+            models = get_available_models_for_dataset(selected_exp["path"], ds)
+            st.markdown(f"**{ds}**: {len(models)} models")
+
+        st.divider()
+        st.markdown("## 🤖 Gemini API")
+
+        has_api_key = bool(st.session_state.gemini_api_key)
+
+        if has_api_key:
+            st.success("API Key configured")
+        else:
+            st.warning("No API key (fallback mode)")
+            api_key_input = st.text_input(
+                "Enter Gemini API Key:",
+                type="password",
+                help="For better intent detection",
+            )
+            if api_key_input:
+                st.session_state.gemini_api_key = api_key_input
+                st.rerun()
+
+        st.divider()
+        st.markdown("## 🏗️ Agent Architecture")
+        st.markdown("""
+        **Agent 1: Intent Classifier**
+        - Detects language & domain
+        - Selects dataset
+
+        **Agent 2: Classification**
+        - Runs all models
+        - Returns predictions
+        """)
 
     st.divider()
 
     # Model overview
-    st.markdown("### 🔧 Available Models")
+    st.markdown("### 🔧 Available Model Types")
 
     cols = st.columns(3)
     for i, (key, info) in enumerate(MODELS.items()):
         with cols[i % 3]:
-            st.markdown(f"""
-            <div style="background-color: #f0f2f6; border-radius: 10px; padding: 1rem; margin: 0.5rem 0; height: 120px;">
-                <h4>{info['icon']} {info['name']}</h4>
-                <p style="color: #1E88E5; font-size: 0.9rem; margin: 0;">{info['type']}</p>
-                <p style="font-size: 0.8rem; color: #666;">{info['description']}</p>
-            </div>
-            """, unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown(f"**{info['icon']} {info['name']}**")
+                st.caption(f"Type: {info['type']}")
+                st.caption(info['description'])
 
     st.divider()
 
@@ -142,19 +250,42 @@ def main():
             "Enter text to compare across all models:",
             height=100,
             placeholder="Enter your text here...",
+            key="comparison_text",
         )
 
+        # Example buttons
+        st.markdown("**Quick Examples:**")
+        example_col1, example_col2 = st.columns(2)
+
+        with example_col1:
+            if st.button("🎬 English Positive", use_container_width=True):
+                st.session_state.comparison_text = "This movie was absolutely fantastic! The acting was superb and the plot kept me engaged throughout. Highly recommended!"
+                st.rerun()
+
+            if st.button("🇹🇷 Turkish Positive", use_container_width=True):
+                st.session_state.comparison_text = "Bu ürün gerçekten harika, kesinlikle tavsiye ederim! Kargo çok hızlı geldi ve kalitesi mükemmel."
+                st.rerun()
+
+        with example_col2:
+            if st.button("🎬 English Negative", use_container_width=True):
+                st.session_state.comparison_text = "Terrible movie. Waste of time and money. The acting was awful and the story made no sense at all."
+                st.rerun()
+
+            if st.button("🇹🇷 Turkish Negative", use_container_width=True):
+                st.session_state.comparison_text = "Çok kötü bir ürün, kesinlikle almayın. Para çöpe gitti, hiç memnun kalmadım."
+                st.rerun()
+
     with col2:
-        dataset = st.selectbox(
-            "Dataset:",
-            ["imdb", "turkish_sentiment", "ag_news", "turkish_news"],
-            format_func=lambda x: {
-                "imdb": "🎬 IMDB",
-                "turkish_sentiment": "🇹🇷 TR Sentiment",
-                "ag_news": "📰 AG News",
-                "turkish_news": "🇹🇷 TR News",
-            }[x]
-        )
+        st.markdown("### Current Settings")
+        gemini_status = "Enabled" if st.session_state.gemini_api_key else "Fallback"
+        st.info(f"""
+        **Experiment:** {selected_exp_name}
+        **Mode:** Auto-detect
+        **Intent:** {gemini_status}
+
+        Dataset will be automatically
+        selected based on your text.
+        """)
 
         compare_button = st.button(
             "🔍 Compare Models",
@@ -165,27 +296,52 @@ def main():
 
     # Run comparison
     if compare_button and text_input:
+        # Use Intent Classifier Agent to detect language and domain
+        api_key = st.session_state.gemini_api_key or None
+        intent_agent = get_intent_classifier_agent(api_key)
+        intent_result = intent_agent.process(text_input)
+
+        language = intent_result["language"]
+        domain = intent_result["domain"]
+        detected_dataset = intent_result["dataset"]
+        intent_gemini = intent_result["gemini_available"]
+
+        # Check if dataset is available
+        available_datasets = get_available_datasets_for_experiment(selected_exp["path"])
+
+        if detected_dataset not in available_datasets:
+            st.error(f"Dataset '{detected_dataset}' not found in experiment '{selected_exp_name}'.")
+            st.info(f"Available datasets: {', '.join(available_datasets)}")
+            return
+
+        st.divider()
+        st.markdown("### 🎯 Intent Detection")
+
+        if intent_gemini:
+            st.success("🤖 Powered by Google Gemini")
+        else:
+            st.warning("⚠️ Using fallback keyword-based detection")
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Language", language.upper())
+        with col2:
+            st.metric("Domain", domain.capitalize())
+        with col3:
+            st.metric("Dataset", detected_dataset)
+
+        if intent_result.get("reasoning"):
+            st.info(f"💭 **Reasoning:** {intent_result['reasoning']}")
+
         st.divider()
         st.markdown("### 📊 Comparison Results")
 
-        with st.spinner("Running all models..."):
-            # Progress display
-            progress_bar = st.progress(0)
-            status_text = st.empty()
+        with st.spinner("Running all models with Classification Agent..."):
+            results = compare_models(text_input, selected_exp["path"], detected_dataset, language)
 
-            results = {}
-            for i, model_key in enumerate(MODELS.keys()):
-                status_text.text(f"Running {MODELS[model_key]['name']}...")
-                time.sleep(0.2)  # Simulate processing
-
-                # Get simulated results
-                all_results = simulate_model_comparison(text_input, dataset)
-                results[model_key] = all_results[model_key]
-
-                progress_bar.progress((i + 1) / len(MODELS))
-
-            status_text.text("✅ All models completed!")
-            progress_bar.progress(1.0)
+        if not results:
+            st.error("No models could be loaded for this dataset.")
+            return
 
         # Display results
         st.markdown("#### 🏆 Model Predictions")
@@ -198,7 +354,7 @@ def main():
                 "Type": MODELS[model_key]["type"],
                 "Prediction": result["prediction"],
                 "Confidence": result["confidence"],
-                "Time (s)": result["processing_time"],
+                "Time (ms)": result["processing_time"] * 1000,
             })
 
         df_comparison = pd.DataFrame(comparison_data)
@@ -210,7 +366,7 @@ def main():
         st.dataframe(
             df_comparison.style.format({
                 "Confidence": "{:.1%}",
-                "Time (s)": "{:.3f}",
+                "Time (ms)": "{:.2f}",
             }).background_gradient(subset=["Confidence"], cmap="Greens"),
             use_container_width=True,
             hide_index=True,
@@ -234,6 +390,7 @@ def main():
                 xaxis_title="",
                 yaxis_title="Confidence",
                 showlegend=False,
+                yaxis_tickformat=".0%",
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -243,14 +400,14 @@ def main():
             fig = px.bar(
                 df_comparison,
                 x="Model",
-                y="Time (s)",
-                color="Time (s)",
+                y="Time (ms)",
+                color="Time (ms)",
                 color_continuous_scale="Reds_r",
-                title="Processing Time (seconds)",
+                title="Prediction Time (milliseconds)",
             )
             fig.update_layout(
                 xaxis_title="",
-                yaxis_title="Time (s)",
+                yaxis_title="Time (ms)",
                 showlegend=False,
             )
             st.plotly_chart(fig, use_container_width=True)
@@ -259,7 +416,6 @@ def main():
         st.markdown("#### 🤝 Model Consensus")
 
         predictions = [r["prediction"] for r in results.values()]
-        unique_preds = set(predictions)
         most_common = max(set(predictions), key=predictions.count)
         agreement = predictions.count(most_common) / len(predictions)
 
@@ -275,11 +431,11 @@ def main():
             st.metric("Agreement Rate", f"{agreement:.0%}")
 
         if agreement == 1.0:
-            st.success("✅ All models agree on the prediction!")
-        elif agreement >= 0.67:
-            st.info(f"ℹ️ Majority ({predictions.count(most_common)}/6) of models predict: **{most_common}**")
+            st.success("All models agree on the prediction!")
+        elif agreement >= 0.6:
+            st.info(f"Majority ({predictions.count(most_common)}/{len(predictions)}) of models predict: **{most_common}**")
         else:
-            st.warning("⚠️ Models have significant disagreement. Consider reviewing the input.")
+            st.warning("Models have significant disagreement. Consider reviewing the input.")
 
         # Detailed probability comparison
         st.divider()
@@ -305,9 +461,45 @@ def main():
             labels=dict(x="Class", y="Model", color="Probability"),
             color_continuous_scale="Greens",
             title="Probability Heatmap (Model × Class)",
+            text_auto=".2f",
         )
         fig.update_layout(height=400)
         st.plotly_chart(fig, use_container_width=True)
+
+        # Individual model details
+        st.divider()
+        st.markdown("#### 📋 Individual Model Details")
+
+        for model_key, result in results.items():
+            with st.expander(f"{MODELS[model_key]['icon']} {MODELS[model_key]['name']}"):
+                col1, col2 = st.columns([1, 2])
+
+                with col1:
+                    st.metric("Prediction", result["prediction"].upper())
+                    st.metric("Confidence", f"{result['confidence']:.1%}")
+                    st.metric("Time", f"{result['processing_time']*1000:.2f} ms")
+
+                with col2:
+                    probs = result["probabilities"]
+                    df_prob = pd.DataFrame({
+                        "Class": list(probs.keys()),
+                        "Probability": list(probs.values()),
+                    }).sort_values("Probability", ascending=True)
+
+                    fig = px.bar(
+                        df_prob,
+                        x="Probability",
+                        y="Class",
+                        orientation="h",
+                        color="Probability",
+                        color_continuous_scale="Greens",
+                    )
+                    fig.update_layout(
+                        showlegend=False,
+                        height=200,
+                        margin=dict(l=0, r=0, t=0, b=0),
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
 
 
 if __name__ == "__main__":
