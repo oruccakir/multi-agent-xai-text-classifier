@@ -1,22 +1,22 @@
-# AG News Baseline Experiment Configuration
-# Train all traditional ML models on AG News dataset
+# Ag News Baseline Experiment Configuration
+# Generated from UI on 2026-02-05 16:23:47
 
 experiment:
-  name: "baseline"
-  description: "Baseline experiment for AG News classification"
-  author: "Oruç Çakır"
-
-# Dataset configuration
+  name: baseline
+  description: Experiment for ag_news classification
+  author: cakir
 dataset:
-  name: "ag_news"
-  train_path: "data/processed/ag_news_train.csv"
-  test_path: "data/processed/ag_news_test.csv"
-  language: "english"
-  task: "multiclass_news"
-  classes: ["World", "Sports", "Business", "Sci/Tech"]
-  sample_size: null
-
-# Preprocessing settings
+  name: ag_news
+  train_path: data/processed/ag_news_train.csv
+  test_path: data/processed/ag_news_test.csv
+  language: english
+  task: multiclass_news
+  classes:
+  - Business
+  - Sci/Tech
+  - Sports
+  - World
+  sample_size: 50000
 preprocessing:
   remove_stopwords: true
   remove_punctuation: true
@@ -25,53 +25,43 @@ preprocessing:
   remove_html: true
   lowercase: true
   min_word_length: 2
-
-# Feature extraction
 feature_extraction:
-  method: "tfidf"
+  method: tfidf
   max_features: 10000
-  ngram_range: [1, 2]
+  ngram_range:
+  - 1
+  - 2
   min_df: 2
   max_df: 0.95
   sublinear_tf: true
-  sparse: false  # Use sparse matrix format (recommended for memory efficiency)
-
-# Models to train
+  sparse: true
 models:
   naive_bayes:
     enabled: true
     alpha: 1.0
-
   svm:
     enabled: true
     C: 1.0
     max_iter: 1000
-
   random_forest:
     enabled: true
     n_estimators: 100
     max_depth: 50
-    n_jobs: 8  # Limited to 8 cores to prevent high memory usage
-
+    n_jobs: 4
   knn:
     enabled: true
     n_neighbors: 5
-    metric: "euclidean"
-    weights: "distance"
+    metric: euclidean
+    weights: distance
+    algorithm: ball_tree
     n_jobs: 1
-    algorithm: "ball_tree"
-
   logistic_regression:
     enabled: true
     C: 1.0
     max_iter: 1000
-    solver: "lbfgs"
-
-# Training settings
+    solver: lbfgs
 training:
   random_state: 42
-
-# Output settings
 output:
   save_models: true
   save_feature_extractor: true

@@ -417,6 +417,7 @@ def create_model(model_name: str, params: dict):
 def train_models(
     dataset: dict,
     experiment_name: str,
+    experiment_description: str,
     selected_models: list,
     model_params: dict,
     preprocessing_config: dict,
@@ -427,6 +428,7 @@ def train_models(
     """Train selected models on the dataset."""
     results = {
         "experiment_name": experiment_name,
+        "experiment_description": experiment_description,
         "dataset": dataset["name"],
         "timestamp": datetime.now().isoformat(),
         "models": {},
@@ -557,18 +559,96 @@ def train_models(
     with open(results_path, "w") as f:
         json.dump(results, f, indent=2)
 
-    # Save config
-    config = {
-        "experiment": {"name": experiment_name},
-        "dataset": {"name": dataset["name"]},
-        "preprocessing": preprocessing_config,
-        "feature_extraction": feature_config,
-        "models": {m: model_params.get(m, {}) for m in selected_models},
-    }
-    config_path = output_dir / "config.yaml"
+    # Build full config in the standard format
     import yaml
+    import getpass
+
+    # Get unique classes from training data
+    full_train_df = pd.read_csv(dataset["train_path"])
+    classes = full_train_df["label"].unique().tolist()
+
+    # Build models config with enabled flag
+    models_config = {}
+    all_model_names = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression"]
+    for model_name in all_model_names:
+        if model_name in selected_models:
+            model_cfg = {"enabled": True}
+            model_cfg.update(model_params.get(model_name, {}))
+            models_config[model_name] = model_cfg
+        else:
+            models_config[model_name] = {"enabled": False}
+
+    # Determine task type based on classes
+    language = preprocessing_config.get("language", "english")
+    if len(classes) == 2:
+        task = "binary_classification"
+    elif language == "turkish":
+        task = "multiclass_sentiment" if any(c in str(classes).lower() for c in ["pozitif", "negatif", "notr"]) else "multiclass"
+    else:
+        task = "multiclass_news" if any(c in str(classes) for c in ["World", "Sports", "Business", "Sci/Tech"]) else "multiclass"
+
+    config = {
+        "experiment": {
+            "name": experiment_name,
+            "description": experiment_description or f"Experiment for {dataset['name']} classification",
+            "author": getpass.getuser(),
+        },
+        "dataset": {
+            "name": dataset["name"],
+            "train_path": f"data/processed/{dataset['name']}_train.csv",
+            "test_path": f"data/processed/{dataset['name']}_test.csv",
+            "language": language,
+            "task": task,
+            "classes": classes,
+            "sample_size": sample_size,
+        },
+        "preprocessing": {
+            "remove_stopwords": preprocessing_config.get("remove_stopwords", True),
+            "remove_punctuation": preprocessing_config.get("remove_punctuation", True),
+            "remove_numbers": preprocessing_config.get("remove_numbers", False),
+            "remove_urls": preprocessing_config.get("remove_urls", True),
+            "remove_html": preprocessing_config.get("remove_html", True),
+            "lowercase": preprocessing_config.get("lowercase", True),
+            "min_word_length": preprocessing_config.get("min_word_length", 2),
+        },
+        "feature_extraction": {
+            "method": "tfidf",
+            "max_features": feature_config.get("max_features", 10000),
+            "ngram_range": feature_config.get("ngram_range", [1, 2]),
+            "min_df": feature_config.get("min_df", 2),
+            "max_df": feature_config.get("max_df", 0.95),
+            "sublinear_tf": feature_config.get("sublinear_tf", True),
+            "sparse": feature_config.get("sparse", True),
+        },
+        "models": models_config,
+        "training": {
+            "random_state": 42,
+        },
+        "output": {
+            "save_models": True,
+            "save_feature_extractor": True,
+            "save_metrics": True,
+            "save_confusion_matrix": True,
+        },
+    }
+
+    # Save config to output directory (data/models/...)
+    config_path = output_dir / "config.yaml"
     with open(config_path, "w") as f:
-        yaml.dump(config, f, default_flow_style=False)
+        yaml.dump(config, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+    # Also save config to configs/{experiment_name}/{dataset_name}.yaml
+    configs_dir = project_root / "configs" / experiment_name
+    configs_dir.mkdir(parents=True, exist_ok=True)
+    configs_path = configs_dir / f"{dataset['name']}.yaml"
+
+    # Add header comment
+    config_content = f"# {dataset['name'].replace('_', ' ').title()} {experiment_name.title()} Experiment Configuration\n"
+    config_content += f"# Generated from UI on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+    config_content += yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+    with open(configs_path, "w") as f:
+        f.write(config_content)
 
     if progress_callback:
         progress_callback(1.0, "Training complete!")
@@ -830,14 +910,27 @@ def main():
 
     # Tab 2: Configuration
     with tab2:
-        st.markdown("### Experiment Name")
+        st.markdown("### Experiment Info")
 
-        experiment_name = st.text_input(
-            "Experiment name:",
-            value="baseline",
-            help="Models will be saved to data/models/{experiment_name}/{dataset}/",
-        )
+        col1, col2 = st.columns([1, 2])
+
+        with col1:
+            experiment_name = st.text_input(
+                "Experiment name:",
+                value="baseline",
+                help="Models will be saved to data/models/{experiment_name}/{dataset}/",
+            )
+
+        with col2:
+            experiment_description = st.text_input(
+                "Description:",
+                value="",
+                placeholder="e.g., Baseline experiment with default hyperparameters",
+                help="Brief description of this experiment for documentation",
+            )
+
         st.session_state.experiment_name = experiment_name
+        st.session_state.experiment_description = experiment_description
 
         st.divider()
 
@@ -1057,6 +1150,11 @@ def main():
     with tab3:
         st.markdown("### Training Summary")
 
+        # Show experiment description if provided
+        exp_desc = st.session_state.get("experiment_description", "")
+        if exp_desc:
+            st.info(f"**Description:** {exp_desc}")
+
         # Show summary
         col1, col2, col3 = st.columns(3)
 
@@ -1119,6 +1217,7 @@ def main():
                 results = train_models(
                     dataset=st.session_state.selected_dataset,
                     experiment_name=st.session_state.experiment_name,
+                    experiment_description=st.session_state.get("experiment_description", ""),
                     selected_models=st.session_state.selected_models,
                     model_params=st.session_state.model_params,
                     preprocessing_config=st.session_state.preprocessing_config,
@@ -1214,10 +1313,17 @@ def main():
             for model_name, result in errors:
                 st.error(f"**{MODELS_INFO[model_name]['name']}**: {result['error']}")
 
-        # Output location
-        st.markdown("### Output Location")
-        output_path = MODELS_DIR / results["experiment_name"] / results["dataset"]
-        st.code(str(output_path))
+        # Output locations (show relative paths from repo root)
+        st.markdown("### Output Locations")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("**Models & Results:**")
+            output_path = f"data/models/{results['experiment_name']}/{results['dataset']}"
+            st.code(output_path)
+        with col2:
+            st.markdown("**Config File:**")
+            config_path = f"configs/{results['experiment_name']}/{results['dataset']}.yaml"
+            st.code(config_path)
 
         # Clear results button
         if st.button("🗑️ Clear Results"):
