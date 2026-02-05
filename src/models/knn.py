@@ -20,7 +20,8 @@ class KNNClassifier(BaseModel):
         n_neighbors: int = 5,
         metric: str = "cosine",
         weights: str = "distance",
-        n_jobs: int = -1,
+        n_jobs: int = 1,
+        algorithm: str = "auto",
     ):
         """
         Initialize KNN classifier.
@@ -29,7 +30,8 @@ class KNNClassifier(BaseModel):
             n_neighbors: Number of neighbors to use
             metric: Distance metric ('cosine', 'euclidean', 'manhattan')
             weights: Weight function ('uniform', 'distance')
-            n_jobs: Number of parallel jobs (-1 for all cores)
+            n_jobs: Number of parallel jobs (default 1 for memory safety)
+            algorithm: Algorithm used to compute neighbors ('auto', 'ball_tree', 'kd_tree', 'brute')
         """
         super().__init__(name="KNN")
         self.n_neighbors = n_neighbors
@@ -39,6 +41,7 @@ class KNNClassifier(BaseModel):
             metric=metric,
             weights=weights,
             n_jobs=n_jobs,
+            algorithm=algorithm,
         )
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> "KNNClassifier":

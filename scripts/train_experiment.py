@@ -65,6 +65,8 @@ def create_model(model_name: str, model_config: Dict[str, Any]):
             n_neighbors=model_config.get("n_neighbors", 5),
             metric=model_config.get("metric", "cosine"),
             weights=model_config.get("weights", "distance"),
+            n_jobs=model_config.get("n_jobs", 1),
+            algorithm=model_config.get("algorithm", "brute"),
         )
     elif model_name == "logistic_regression":
         return LogisticRegressionClassifier(
