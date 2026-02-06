@@ -175,19 +175,19 @@ def main():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        if st.button("📝 Classify Text", use_container_width=True):
+        if st.button("📝 Classify Text", width="stretch"):
             st.switch_page("pages/1_📝_Classify_Text.py")
 
     with col2:
-        if st.button("📊 Batch Process", use_container_width=True):
+        if st.button("📊 Batch Process", width="stretch"):
             st.switch_page("pages/2_📊_Batch_Processing.py")
 
     with col3:
-        if st.button("⚖️ Compare Models", use_container_width=True):
+        if st.button("⚖️ Compare Models", width="stretch"):
             st.switch_page("pages/3_⚖️_Model_Comparison.py")
 
     with col4:
-        if st.button("📚 Explore Data", use_container_width=True):
+        if st.button("📚 Explore Data", width="stretch"):
             st.switch_page("pages/4_📚_Dataset_Explorer.py")
 
     # Footer

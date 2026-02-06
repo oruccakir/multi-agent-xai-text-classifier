@@ -162,7 +162,7 @@ def main():
                 hole=0.4,
                 color_discrete_sequence=px.colors.qualitative.Set2,
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         with col2:
             st.markdown("#### Text Length Distribution")
@@ -179,7 +179,7 @@ def main():
                 xaxis_title="Text Length (characters)",
                 yaxis_title="Count",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         # Text length by class
         st.markdown("#### Text Length by Class")
@@ -197,7 +197,7 @@ def main():
             yaxis_title="Text Length",
             showlegend=False,
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         st.divider()
 
@@ -263,7 +263,7 @@ def main():
                     yaxis=dict(autorange="reversed"),
                     height=600,
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
         # Download option
         st.divider()

@@ -346,13 +346,13 @@ def main():
         with example_col1:
             st.button(
                 "🎬 IMDB Example",
-                use_container_width=True,
+                width="stretch",
                 on_click=set_example_text,
                 args=("imdb",),
             )
             st.button(
                 "🇹🇷 Turkish Sentiment",
-                use_container_width=True,
+                width="stretch",
                 on_click=set_example_text,
                 args=("turkish_sentiment",),
             )
@@ -360,13 +360,13 @@ def main():
         with example_col2:
             st.button(
                 "📰 AG News Example",
-                use_container_width=True,
+                width="stretch",
                 on_click=set_example_text,
                 args=("ag_news",),
             )
             st.button(
                 "🇹🇷 Turkish News",
-                use_container_width=True,
+                width="stretch",
                 on_click=set_example_text,
                 args=("turkish_news",),
             )
@@ -393,7 +393,7 @@ def main():
         classify_button = st.button(
             "🚀 Classify Text",
             type="primary",
-            use_container_width=True,
+            width="stretch",
             disabled=not text_input,
         )
 
@@ -591,7 +591,7 @@ def main():
                 yaxis_title="",
                 height=300,
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         st.divider()
 
@@ -623,7 +623,7 @@ def main():
             if lime_data:
                 lime_fig = plot_lime_explanation(lime_data, result["classification"]["prediction"])
                 if lime_fig:
-                    st.plotly_chart(lime_fig, use_container_width=True)
+                    st.plotly_chart(lime_fig, width="stretch")
 
                 # Show LIME details
                 with st.expander("LIME Details"):
@@ -644,7 +644,7 @@ def main():
             if shap_data:
                 shap_fig = plot_shap_explanation(shap_data, result["classification"]["prediction"])
                 if shap_fig:
-                    st.plotly_chart(shap_fig, use_container_width=True)
+                    st.plotly_chart(shap_fig, width="stretch")
 
                 # Show SHAP details
                 with st.expander("SHAP Details"):
@@ -686,7 +686,7 @@ def main():
                     yaxis_title="",
                     height=400,
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
             else:
                 st.warning("No word impacts available for this text.")
 

@@ -138,10 +138,12 @@ def display_config_section(title: str, config_dict: dict, icon: str = "⚙️"):
             value = "✅ Yes" if value else "❌ No"
         elif value is None:
             value = "None (full data)"
+        else:
+            value = str(value)
         rows.append({"Parameter": key.replace("_", " ").title(), "Value": value})
 
     df = pd.DataFrame(rows)
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df, width="stretch", hide_index=True)
 
 
 def display_model_config(model_name: str, model_config: dict):
@@ -158,10 +160,10 @@ def display_model_config(model_name: str, model_config: dict):
             for key, value in config_to_show.items():
                 rows.append({
                     "Hyperparameter": key.replace("_", " ").title(),
-                    "Value": value
+                    "Value": str(value),
                 })
             df = pd.DataFrame(rows)
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            st.dataframe(df, width="stretch", hide_index=True)
         else:
             st.info("Using default parameters")
 
@@ -206,7 +208,7 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             height=400,
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     with col2:
         # Training time comparison
@@ -223,7 +225,7 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
             showlegend=False,
             height=400,
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     # Detailed metrics table
     st.markdown("#### Detailed Metrics")
@@ -240,7 +242,7 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
             "Recall": "{:.2%}",
             "Train Time (s)": "{:.2f}",
         }).background_gradient(subset=["Accuracy", "F1 (Macro)"], cmap="Greens"),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -283,7 +285,7 @@ def display_confusion_matrices(results: dict):
                 height=300,
                 margin=dict(l=10, r=10, t=40, b=10),
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
 
 def display_classification_reports(results: dict):
@@ -328,7 +330,7 @@ def display_classification_reports(results: dict):
             title="F1-Score by Model and Class",
             height=400,
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 
 def main():

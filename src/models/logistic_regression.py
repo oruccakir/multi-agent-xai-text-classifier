@@ -20,7 +20,6 @@ class LogisticRegressionClassifier(BaseModel):
         C: float = 1.0,
         max_iter: int = 1000,
         solver: str = "lbfgs",
-        n_jobs: int = -1,
         random_state: int = 42,
     ):
         """
@@ -30,7 +29,6 @@ class LogisticRegressionClassifier(BaseModel):
             C: Inverse of regularization strength (smaller = stronger)
             max_iter: Maximum number of iterations
             solver: Algorithm to use ('lbfgs', 'liblinear', 'saga')
-            n_jobs: Number of parallel jobs (-1 for all cores)
             random_state: Random seed for reproducibility
         """
         super().__init__(name="LogisticRegression")
@@ -40,7 +38,6 @@ class LogisticRegressionClassifier(BaseModel):
             C=C,
             max_iter=max_iter,
             solver=solver,
-            n_jobs=n_jobs,
             random_state=random_state,
         )
 

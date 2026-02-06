@@ -791,7 +791,7 @@ def main():
                             st.rerun()
 
                         # Show preview
-                        st.dataframe(df.head(5), use_container_width=True)
+                        st.dataframe(df.head(5), width="stretch")
 
                         # Create temporary dataset info
                         selected_dataset = {
@@ -863,7 +863,7 @@ def main():
         st.markdown("### Data Preview")
 
         preview_df = pd.read_csv(selected_dataset["train_path"], nrows=10)
-        st.dataframe(preview_df, use_container_width=True)
+        st.dataframe(preview_df, width="stretch")
 
         # Detect language
         language = detect_language(preview_df)
@@ -881,7 +881,7 @@ def main():
             title="Training Set Class Distribution",
             hole=0.4,
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         # Sampling option
         st.markdown("### Sampling (Optional)")
@@ -1198,7 +1198,7 @@ def main():
             train_button = st.button(
                 "🚀 Start Training",
                 type="primary",
-                use_container_width=True,
+                width="stretch",
                 disabled=len(selected_models) == 0,
             )
 
@@ -1285,7 +1285,7 @@ def main():
                     "Recall": "{:.4f}",
                     "Train Time (s)": "{:.2f}",
                 }).background_gradient(subset=["F1 (Macro)"], cmap="Greens"),
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
 
@@ -1300,7 +1300,7 @@ def main():
                 title="Model Performance Metrics",
             )
             fig.update_layout(yaxis_title="Score", xaxis_title="")
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
             # Best model
             best_model = df_results.iloc[0]

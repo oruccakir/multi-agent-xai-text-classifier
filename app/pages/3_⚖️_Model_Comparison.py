@@ -274,13 +274,13 @@ def main():
         with example_col1:
             st.button(
                 "🎬 English Positive",
-                use_container_width=True,
+                width="stretch",
                 on_click=set_comparison_example,
                 args=("en_positive",),
             )
             st.button(
                 "🇹🇷 Turkish Positive",
-                use_container_width=True,
+                width="stretch",
                 on_click=set_comparison_example,
                 args=("tr_positive",),
             )
@@ -288,13 +288,13 @@ def main():
         with example_col2:
             st.button(
                 "🎬 English Negative",
-                use_container_width=True,
+                width="stretch",
                 on_click=set_comparison_example,
                 args=("en_negative",),
             )
             st.button(
                 "🇹🇷 Turkish Negative",
-                use_container_width=True,
+                width="stretch",
                 on_click=set_comparison_example,
                 args=("tr_negative",),
             )
@@ -314,7 +314,7 @@ def main():
         compare_button = st.button(
             "🔍 Compare Models",
             type="primary",
-            use_container_width=True,
+            width="stretch",
             disabled=not text_input,
         )
 
@@ -392,7 +392,7 @@ def main():
                 "Confidence": "{:.1%}",
                 "Time (ms)": "{:.2f}",
             }).background_gradient(subset=["Confidence"], cmap="Greens"),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
@@ -416,7 +416,7 @@ def main():
                 showlegend=False,
                 yaxis_tickformat=".0%",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         with col2:
             st.markdown("#### Processing Time")
@@ -434,7 +434,7 @@ def main():
                 yaxis_title="Time (ms)",
                 showlegend=False,
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         # Consensus analysis
         st.markdown("#### 🤝 Model Consensus")
@@ -488,7 +488,7 @@ def main():
             text_auto=".2f",
         )
         fig.update_layout(height=400)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         # Individual model details
         st.divider()
@@ -523,7 +523,7 @@ def main():
                         height=200,
                         margin=dict(l=0, r=0, t=0, b=0),
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
 
 
 if __name__ == "__main__":

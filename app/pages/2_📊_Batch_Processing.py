@@ -225,7 +225,7 @@ def main():
 
             # Preview data
             st.markdown("### 👀 Data Preview")
-            st.dataframe(df.head(10), use_container_width=True)
+            st.dataframe(df.head(10), width="stretch")
             st.info(f"📊 Total rows: **{len(df)}**")
 
             # Use Intent Classifier Agent to detect language and dataset
@@ -279,7 +279,7 @@ def main():
                 st.info(f"💭 **Reasoning:** {intent_result['reasoning']}")
 
             # Process button
-            if st.button("🚀 Process All Texts", type="primary", use_container_width=True):
+            if st.button("🚀 Process All Texts", type="primary", width="stretch"):
                 with st.spinner(f"Processing {len(df)} texts with Classification Agent..."):
                     # Get Classification Agent
                     classification_agent = get_classification_agent()
@@ -359,7 +359,7 @@ def main():
                     title="Distribution of Predictions",
                     hole=0.4,
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
                 # Confidence distribution
                 st.markdown("#### Confidence Distribution")
@@ -375,11 +375,11 @@ def main():
                     xaxis_title="Confidence",
                     yaxis_title="Count",
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
                 # Results table
                 st.markdown("#### Detailed Results")
-                st.dataframe(results_df, use_container_width=True)
+                st.dataframe(results_df, width="stretch")
 
                 # Download button
                 csv = results_df.to_csv(index=False)
@@ -399,7 +399,7 @@ def main():
         st.divider()
         st.markdown("### 🧪 Try with Sample Data")
 
-        if st.button("Load Sample Data", use_container_width=True):
+        if st.button("Load Sample Data", width="stretch"):
             # Create sample data
             sample_data = pd.DataFrame({
                 "text": [
@@ -418,7 +418,7 @@ def main():
 
             st.session_state.sample_df = sample_data
             st.info("✅ Sample data loaded! Upload it as a CSV or copy the format.")
-            st.dataframe(sample_data, use_container_width=True)
+            st.dataframe(sample_data, width="stretch")
 
             # Provide download of sample
             csv = sample_data.to_csv(index=False)
