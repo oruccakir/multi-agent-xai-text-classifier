@@ -21,6 +21,25 @@ def get_available_devices() -> List[str]:
     return devices
 
 
+def get_system_ram_gb() -> float:
+    """Get total system RAM in GB."""
+    try:
+        import psutil
+        return round(psutil.virtual_memory().total / (1024 ** 3), 1)
+    except ImportError:
+        # Fallback if psutil not available
+        try:
+            import os
+            with open('/proc/meminfo', 'r') as f:
+                for line in f:
+                    if 'MemTotal' in line:
+                        kb = int(line.split()[1])
+                        return round(kb / (1024 ** 2), 1)
+        except Exception:
+            pass
+    return 0.0
+
+
 def get_device_info() -> Dict[str, dict]:
     """
     Get detailed information about available devices.
@@ -30,19 +49,21 @@ def get_device_info() -> Dict[str, dict]:
     """
     info = {}
     
-    # CPU info
+    # CPU info with RAM
     try:
         import os
         cpu_count = os.cpu_count() or 1
+        ram_gb = get_system_ram_gb()
         info["cpu"] = {
             "name": "CPU",
             "type": "cpu",
             "cores": cpu_count,
+            "ram_gb": ram_gb,
         }
     except Exception:
         info["cpu"] = {"name": "CPU", "type": "cpu"}
     
-    # GPU info
+    # GPU info with VRAM
     if torch.cuda.is_available():
         num_gpus = torch.cuda.device_count()
         for i in range(num_gpus):
@@ -53,7 +74,7 @@ def get_device_info() -> Dict[str, dict]:
                 info[device_name] = {
                     "name": props.name,
                     "type": "cuda",
-                    "memory_gb": round(memory_gb, 1),
+                    "vram_gb": round(memory_gb, 1),
                     "compute_capability": f"{props.major}.{props.minor}",
                 }
             except Exception:
@@ -76,14 +97,19 @@ def get_device_display_name(device: str) -> str:
     if device == "cpu":
         cpu_info = info.get("cpu", {})
         cores = cpu_info.get("cores", "")
-        return f"CPU ({cores} cores)" if cores else "CPU"
+        ram = cpu_info.get("ram_gb", 0)
+        if cores and ram:
+            return f"CPU ({cores} cores, {ram} GB RAM)"
+        elif cores:
+            return f"CPU ({cores} cores)"
+        return "CPU"
     
     if device.startswith("cuda"):
         device_info = info.get(device, {})
         gpu_name = device_info.get("name", "Unknown GPU")
-        memory = device_info.get("memory_gb", "")
+        vram = device_info.get("vram_gb", "")
         gpu_idx = device.split(":")[-1] if ":" in device else "0"
-        return f"GPU {gpu_idx}: {gpu_name} ({memory} GB)" if memory else f"GPU {gpu_idx}: {gpu_name}"
+        return f"GPU {gpu_idx}: {gpu_name} ({vram} GB VRAM)" if vram else f"GPU {gpu_idx}: {gpu_name}"
     
     return device
 
@@ -95,6 +121,12 @@ def get_hardware_summary() -> Dict:
     details = get_device_info()
     display_names = {dev: get_device_display_name(dev) for dev in devices}
     
+    # Extract RAM and VRAM for easy access
+    ram_gb = details.get("cpu", {}).get("ram_gb", 0)
+    vram_gb = 0
+    if "cuda:0" in details:
+        vram_gb = details["cuda:0"].get("vram_gb", 0)
+    
     return {
         "devices": devices,
         "default": default,
@@ -102,4 +134,6 @@ def get_hardware_summary() -> Dict:
         "display_names": display_names,
         "cuda_available": torch.cuda.is_available(),
         "cuda_version": torch.version.cuda if torch.cuda.is_available() else None,
+        "ram_gb": ram_gb,
+        "vram_gb": vram_gb,
     }

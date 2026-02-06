@@ -348,8 +348,12 @@ def main():
         available_devices = hw_summary["devices"]
         if hw_summary["cuda_available"]:
             st.success(f"🎮 CUDA {hw_summary.get('cuda_version', '')} available")
+            if hw_summary.get("vram_gb"):
+                st.caption(f"VRAM: {hw_summary['vram_gb']} GB")
         else:
             st.info("💻 CPU-only mode")
+        if hw_summary.get("ram_gb"):
+            st.caption(f"System RAM: {hw_summary['ram_gb']} GB")
         device_options = {dev: get_device_display_name(dev) for dev in available_devices}
         selected_device = st.selectbox(
             "Select Device:",

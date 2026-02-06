@@ -464,6 +464,9 @@ if "training_results" not in st.session_state:
     st.session_state.training_results = None
 if "training_in_progress" not in st.session_state:
     st.session_state.training_in_progress = False
+if "selected_device" not in st.session_state:
+    hw_summary = get_hardware_summary()
+    st.session_state.selected_device = hw_summary["default"]
 
 
 def get_available_datasets():
@@ -499,7 +502,7 @@ def detect_language(df: pd.DataFrame) -> str:
     return "english"
 
 
-def create_model(model_name: str, params: dict):
+def create_model(model_name: str, params: dict, device: str = None):
     """Create a model instance with given parameters."""
     if model_name == "naive_bayes":
         return NaiveBayesClassifier(
@@ -547,6 +550,7 @@ def create_model(model_name: str, params: dict):
             lora_dropout=params.get("lora_dropout", 0.1),
             warmup_ratio=params.get("warmup_ratio", 0.1),
             weight_decay=params.get("weight_decay", 0.01),
+            device=device,
         )
     else:
         raise ValueError(f"Unknown model: {model_name}")
@@ -562,6 +566,7 @@ def train_models(
     feature_config: dict,
     sample_size: int = None,
     progress_callback=None,
+    device: str = None,
 ):
     """Train selected models on the dataset."""
     results = {
@@ -666,7 +671,7 @@ def train_models(
                 num_labels = len(results["classes"])
                 params["num_labels"] = num_labels
 
-                model = create_model(model_name, params)
+                model = create_model(model_name, params, device=device)
 
                 # Transformer uses raw texts directly
                 train_start = time.time()
@@ -859,6 +864,32 @@ def main():
         for ds in datasets:
             st.markdown(f"**{ds['name']}**")
             st.caption(f"Train: {ds['train_size']:,} | Test: {ds['test_size']:,}")
+
+        st.divider()
+        st.markdown("## 🖥️ Hardware")
+        hw_summary = get_hardware_summary()
+        available_devices = hw_summary["devices"]
+        
+        # Show hardware info
+        if hw_summary["cuda_available"]:
+            st.success(f"🎮 CUDA {hw_summary.get('cuda_version', '')} available")
+            if hw_summary.get("vram_gb"):
+                st.caption(f"VRAM: {hw_summary['vram_gb']} GB")
+        else:
+            st.info("💻 CPU-only mode")
+        if hw_summary.get("ram_gb"):
+            st.caption(f"System RAM: {hw_summary['ram_gb']} GB")
+        
+        # Device selector
+        device_options = {dev: get_device_display_name(dev) for dev in available_devices}
+        selected_device = st.selectbox(
+            "Training Device:",
+            options=list(device_options.keys()),
+            format_func=lambda x: device_options[x],
+            index=available_devices.index(st.session_state.selected_device) if st.session_state.selected_device in available_devices else 0,
+            help="Device for transformer model training (sklearn models use CPU)"
+        )
+        st.session_state.selected_device = selected_device
 
     # Main content
     tab1, tab2, tab3 = st.tabs(["📁 Dataset", "🔧 Configuration", "🚀 Train"])
@@ -1448,6 +1479,7 @@ def main():
                     feature_config=st.session_state.feature_config,
                     sample_size=st.session_state.sample_size,
                     progress_callback=update_progress,
+                    device=st.session_state.selected_device,
                 )
 
                 st.session_state.training_results = results
