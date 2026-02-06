@@ -42,6 +42,7 @@ class TransformerClassifier(BaseModel):
         lora_dropout: float = 0.1,
         warmup_ratio: float = 0.1,
         weight_decay: float = 0.01,
+        device: Optional[str] = None,
     ):
         super().__init__(name="Transformer")
         self.model_name = model_name
@@ -61,7 +62,11 @@ class TransformerClassifier(BaseModel):
         self.model = None
         self.label2id = None
         self.id2label = None
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # Use provided device or auto-detect
+        if device is not None:
+            self.device = torch.device(device)
+        else:
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def _initialize_model(self) -> None:
         """Initialize the transformer model and tokenizer."""
@@ -276,8 +281,13 @@ class TransformerClassifier(BaseModel):
         print(f"Model saved to {save_dir}")
 
     @classmethod
-    def load(cls, path: str) -> "TransformerClassifier":
-        """Load a transformer model from a directory."""
+    def load(cls, path: str, device: Optional[str] = None) -> "TransformerClassifier":
+        """Load a transformer model from a directory.
+        
+        Args:
+            path: Path to the saved model directory.
+            device: Device to load model onto (e.g., 'cpu', 'cuda:0').
+        """
         load_dir = Path(path)
 
         with open(load_dir / "transformer_meta.json") as f:
@@ -296,6 +306,7 @@ class TransformerClassifier(BaseModel):
             lora_dropout=meta.get("lora_dropout", 0.1),
             warmup_ratio=meta.get("warmup_ratio", 0.1),
             weight_decay=meta.get("weight_decay", 0.01),
+            device=device,
         )
 
         instance.tokenizer = AutoTokenizer.from_pretrained(str(load_dir))

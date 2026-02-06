@@ -23,6 +23,7 @@ load_dotenv(project_root / ".env", override=True)
 
 from src.agents.intent_classifier import IntentClassifierAgent
 from src.agents.classification_agent import ClassificationAgent
+from src.utils.hardware import get_hardware_summary, get_device_display_name
 
 # Page configuration
 st.set_page_config(
@@ -35,7 +36,7 @@ st.set_page_config(
 MODELS_DIR = project_root / "data" / "models"
 
 # Available models
-AVAILABLE_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression"]
+AVAILABLE_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression", "transformer"]
 
 # Example texts for quick testing
 COMPARISON_EXAMPLES = {
@@ -83,11 +84,22 @@ MODELS = {
         "description": "Linear model with sigmoid activation for probabilities",
         "icon": "📈",
     },
+    "transformer": {
+        "name": "Transformer",
+        "type": "Deep Learning",
+        "description": "HuggingFace transformer for state-of-the-art accuracy",
+        "icon": "🤖",
+    },
 }
 
 # Initialize session state
 if "gemini_api_key" not in st.session_state:
     st.session_state.gemini_api_key = os.getenv("GEMINI_API_KEY", "")
+if "selected_models_to_compare" not in st.session_state:
+    st.session_state.selected_models_to_compare = list(AVAILABLE_MODELS)
+if "selected_device" not in st.session_state:
+    hw_summary = get_hardware_summary()
+    st.session_state.selected_device = hw_summary["default"]
 
 
 def get_available_experiments():
@@ -125,8 +137,14 @@ def get_available_models_for_dataset(exp_path: Path, dataset: str):
     dataset_path = exp_path / dataset
     if dataset_path.exists():
         for model_name in AVAILABLE_MODELS:
-            if (dataset_path / f"{model_name}.pkl").exists():
-                available.append(model_name)
+            if model_name == "transformer":
+                # Transformer saved as directory
+                if (dataset_path / "transformer.dir").exists():
+                    available.append(model_name)
+            else:
+                # sklearn models saved as .pkl
+                if (dataset_path / f"{model_name}.pkl").exists():
+                    available.append(model_name)
     return available
 
 
@@ -143,12 +161,21 @@ def get_classification_agent():
     return ClassificationAgent()
 
 
-def compare_models(text: str, exp_path: Path, dataset: str, language: str) -> dict:
-    """Run all available models on the text and return results."""
+def compare_models(text: str, exp_path: Path, dataset: str, language: str, selected_models: list = None, device: str = None) -> dict:
+    """Run selected models on the text and return results.
+    
+    Args:
+        selected_models: List of model names to compare. If None, uses all available.
+        device: Device for transformer model inference.
+    """
     classification_agent = get_classification_agent()
 
     # Get available models
     available_models = get_available_models_for_dataset(exp_path, dataset)
+    
+    # Filter by selected models if provided
+    if selected_models:
+        available_models = [m for m in available_models if m in selected_models]
 
     results = {}
     for model_name in available_models:
@@ -161,6 +188,7 @@ def compare_models(text: str, exp_path: Path, dataset: str, language: str) -> di
             dataset=dataset,
             model_name=model_name,
             language=language,
+            device=device,
         )
 
         pred_time = time.time() - start_time
@@ -208,6 +236,44 @@ def main():
         for ds in available_datasets:
             models = get_available_models_for_dataset(selected_exp["path"], ds)
             st.markdown(f"**{ds}**: {len(models)} models")
+
+        st.divider()
+        st.markdown("## 🎯 Model Selection")
+        st.caption("Choose which models to compare")
+        
+        # Model multiselect with icons
+        model_options = {k: f"{v['icon']} {v['name']}" for k, v in MODELS.items()}
+        selected_models = st.multiselect(
+            "Select Models:",
+            options=list(MODELS.keys()),
+            default=st.session_state.selected_models_to_compare,
+            format_func=lambda x: model_options[x],
+            help="Select which models to include in comparison"
+        )
+        st.session_state.selected_models_to_compare = selected_models
+        
+        if not selected_models:
+            st.warning("Select at least one model")
+        else:
+            st.info(f"{len(selected_models)} model(s) selected")
+
+        st.divider()
+        st.markdown("## 🖥️ Hardware")
+        hw_summary = get_hardware_summary()
+        available_devices = hw_summary["devices"]
+        if hw_summary["cuda_available"]:
+            st.success(f"🎮 CUDA {hw_summary.get('cuda_version', '')} available")
+        else:
+            st.info("💻 CPU-only mode")
+        device_options = {dev: get_device_display_name(dev) for dev in available_devices}
+        selected_device = st.selectbox(
+            "Select Device:",
+            options=list(device_options.keys()),
+            format_func=lambda x: device_options[x],
+            index=available_devices.index(st.session_state.selected_device) if st.session_state.selected_device in available_devices else 0,
+            help="Device for transformer model inference"
+        )
+        st.session_state.selected_device = selected_device
 
         st.divider()
         st.markdown("## 🤖 Gemini API")
@@ -360,8 +426,15 @@ def main():
         st.divider()
         st.markdown("### 📊 Comparison Results")
 
-        with st.spinner("Running all models with Classification Agent..."):
-            results = compare_models(text_input, selected_exp["path"], detected_dataset, language)
+        with st.spinner("Running selected models with Classification Agent..."):
+            results = compare_models(
+                text_input, 
+                selected_exp["path"], 
+                detected_dataset, 
+                language,
+                selected_models=st.session_state.selected_models_to_compare,
+                device=st.session_state.selected_device
+            )
 
         if not results:
             st.error("No models could be loaded for this dataset.")

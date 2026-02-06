@@ -68,7 +68,8 @@ class ClassificationAgent(BaseAgent):
             }
 
         # Load model
-        model = self._load_model(experiment_path, dataset, model_name)
+        device = input_data.get("device", None)
+        model = self._load_model(experiment_path, dataset, model_name, device=device)
 
         if model is None:
             return {
@@ -130,6 +131,7 @@ class ClassificationAgent(BaseAgent):
         dataset: str,
         model_name: str = "logistic_regression",
         language: str = "english",
+        device: str = None,
     ) -> Dict[str, Any]:
         """
         Convenience method to classify text.
@@ -140,6 +142,7 @@ class ClassificationAgent(BaseAgent):
             dataset: Dataset name
             model_name: Model to use
             language: Language of the text
+            device: Device for transformer model inference
 
         Returns:
             Classification result dict
@@ -150,6 +153,7 @@ class ClassificationAgent(BaseAgent):
             "dataset": dataset,
             "model_name": model_name,
             "language": language,
+            "device": device,
         })
 
     def classify_batch(
@@ -245,10 +249,12 @@ class ClassificationAgent(BaseAgent):
         return found
 
     def _load_model(
-        self, experiment_path: str, dataset: str, model_name: str
+        self, experiment_path: str, dataset: str, model_name: str, device: str = None
     ) -> Optional[Any]:
         """Load a trained model from disk with caching."""
         cache_key = f"{experiment_path}/{dataset}/{model_name}"
+        if device and model_name == "transformer":
+            cache_key += f"/{device}"
 
         if cache_key in self._models_cache:
             return self._models_cache[cache_key]
@@ -260,7 +266,7 @@ class ClassificationAgent(BaseAgent):
                 return None
             try:
                 from src.models.transformer import TransformerClassifier
-                model = TransformerClassifier.load(str(model_path))
+                model = TransformerClassifier.load(str(model_path), device=device)
                 self._models_cache[cache_key] = model
                 return model
             except Exception as e:

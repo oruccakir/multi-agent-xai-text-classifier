@@ -33,6 +33,7 @@ from src.models.random_forest import RandomForestClassifier
 from src.models.knn import KNNClassifier
 from src.models.logistic_regression import LogisticRegressionClassifier
 from src.models.transformer import TransformerClassifier
+from src.utils.hardware import get_hardware_summary, get_device_display_name
 
 # Page configuration
 st.set_page_config(

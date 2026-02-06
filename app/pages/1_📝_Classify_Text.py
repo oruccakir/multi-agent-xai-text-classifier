@@ -30,6 +30,7 @@ from src.agents.xai_agent import XAIAgent
 from src.preprocessing.text_preprocessor import TextPreprocessor
 from src.preprocessing.feature_extractor import FeatureExtractor
 from src.models.base_model import BaseModel
+from src.utils.hardware import get_hardware_summary, get_device_display_name
 
 # Page configuration
 st.set_page_config(
@@ -73,6 +74,9 @@ if "classification_result" not in st.session_state:
     st.session_state.classification_result = None
 if "gemini_api_key" not in st.session_state:
     st.session_state.gemini_api_key = os.getenv("GEMINI_API_KEY", "")
+if "selected_device" not in st.session_state:
+    hw_summary = get_hardware_summary()
+    st.session_state.selected_device = hw_summary["default"]
 
 
 def get_available_experiments():
@@ -146,13 +150,17 @@ def get_xai_agent(api_key: str = None):
 
 
 @st.cache_resource
-def load_model_and_extractor(exp_path: str, dataset: str, model_name: str):
-    """Load model and feature extractor (feature_extractor may be None for transformers)."""
+def load_model_and_extractor(exp_path: str, dataset: str, model_name: str, device: str = None):
+    """Load model and feature extractor (feature_extractor may be None for transformers).
+    
+    Args:
+        device: Device to load transformer models onto (e.g., 'cpu', 'cuda:0')
+    """
     if model_name == "transformer":
         # Transformer model - load from directory, no feature extractor needed
         from src.models.transformer import TransformerClassifier
         model_path = Path(exp_path) / dataset / "transformer.dir"
-        model = TransformerClassifier.load(str(model_path))
+        model = TransformerClassifier.load(str(model_path), device=device)
         return model, None
     else:
         # sklearn model - load model and feature extractor
@@ -335,6 +343,24 @@ def main():
         use_shap = st.checkbox("Enable SHAP Analysis", value=True, help="SHapley Additive exPlanations")
 
         st.divider()
+        st.markdown("## 🖥️ Hardware")
+        hw_summary = get_hardware_summary()
+        available_devices = hw_summary["devices"]
+        if hw_summary["cuda_available"]:
+            st.success(f"🎮 CUDA {hw_summary.get('cuda_version', '')} available")
+        else:
+            st.info("💻 CPU-only mode")
+        device_options = {dev: get_device_display_name(dev) for dev in available_devices}
+        selected_device = st.selectbox(
+            "Select Device:",
+            options=list(device_options.keys()),
+            format_func=lambda x: device_options[x],
+            index=available_devices.index(st.session_state.selected_device) if st.session_state.selected_device in available_devices else 0,
+            help="Device for transformer model inference"
+        )
+        st.session_state.selected_device = selected_device
+
+        st.divider()
         st.markdown("## 🏗️ Agent Architecture")
         st.markdown("""
         **Agent 1: Intent Classifier**
@@ -492,7 +518,8 @@ def main():
 
             # Load model and feature extractor for LIME/SHAP
             model, feature_extractor = load_model_and_extractor(
-                str(selected_exp["path"]), detected_dataset, selected_model
+                str(selected_exp["path"]), detected_dataset, selected_model,
+                device=st.session_state.selected_device
             )
 
             # Create predict_proba function for LIME/SHAP
