@@ -32,6 +32,7 @@ from src.models.svm import SVMClassifier
 from src.models.random_forest import RandomForestClassifier
 from src.models.knn import KNNClassifier
 from src.models.logistic_regression import LogisticRegressionClassifier
+from src.models.transformer import TransformerClassifier
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
@@ -74,6 +75,21 @@ def create_model(model_name: str, model_config: Dict[str, Any]):
             max_iter=model_config.get("max_iter", 1000),
             solver=model_config.get("solver", "lbfgs"),
             random_state=42,
+        )
+    elif model_name == "transformer":
+        return TransformerClassifier(
+            model_name=model_config.get("model_name", "distilbert-base-uncased"),
+            num_labels=model_config.get("num_labels", 2),
+            fine_tune_mode=model_config.get("fine_tune_mode", "head_only"),
+            learning_rate=model_config.get("learning_rate", 2e-5),
+            batch_size=model_config.get("batch_size", 16),
+            epochs=model_config.get("epochs", 3),
+            max_length=model_config.get("max_length", 256),
+            lora_r=model_config.get("lora_r", 8),
+            lora_alpha=model_config.get("lora_alpha", 16),
+            lora_dropout=model_config.get("lora_dropout", 0.1),
+            warmup_ratio=model_config.get("warmup_ratio", 0.1),
+            weight_decay=model_config.get("weight_decay", 0.01),
         )
     else:
         raise ValueError(f"Unknown model: {model_name}")
@@ -132,37 +148,49 @@ def run_experiment(config_path: str) -> Dict[str, Any]:
     X_test_text = test_df["text"].tolist()
     y_test = test_df["label"].values
 
-    # Feature extraction
-    fe_config = config["feature_extraction"]
-    print(f"\n  Extracting features (method: {fe_config['method']})...")
+    # Check which models need TF-IDF features
+    models_config = config["models"]
+    sklearn_models = {
+        k: v for k, v in models_config.items()
+        if k != "transformer" and v.get("enabled", True)
+    }
+    has_transformer = "transformer" in models_config and models_config["transformer"].get("enabled", True)
 
-    start_time = time.time()
-    use_sparse = fe_config.get("sparse", True)
+    # Feature extraction (only for sklearn models)
+    X_train = None
+    X_test = None
 
-    feature_extractor = FeatureExtractor(
-        method=fe_config["method"],
-        max_features=fe_config.get("max_features", 10000),
-        ngram_range=tuple(fe_config.get("ngram_range", [1, 2])),
-        min_df=fe_config.get("min_df", 2),
-        max_df=fe_config.get("max_df", 0.95),
-        sublinear_tf=fe_config.get("sublinear_tf", True),
-    )
+    if sklearn_models:
+        fe_config = config["feature_extraction"]
+        print(f"\n  Extracting features (method: {fe_config['method']})...")
 
-    X_train = feature_extractor.fit_transform(X_train_text, sparse=use_sparse)
-    X_test = feature_extractor.transform(X_test_text, sparse=use_sparse)
-    feature_time = time.time() - start_time
+        start_time = time.time()
+        use_sparse = fe_config.get("sparse", True)
 
-    print(f"  Feature extraction completed in {feature_time:.2f}s")
-    print(f"  Feature matrix shape: {X_train.shape}")
+        feature_extractor = FeatureExtractor(
+            method=fe_config["method"],
+            max_features=fe_config.get("max_features", 10000),
+            ngram_range=tuple(fe_config.get("ngram_range", [1, 2])),
+            min_df=fe_config.get("min_df", 2),
+            max_df=fe_config.get("max_df", 0.95),
+            sublinear_tf=fe_config.get("sublinear_tf", True),
+        )
 
-    # Save feature extractor
-    if config["output"].get("save_feature_extractor", True):
-        fe_path = output_dir / "feature_extractor.pkl"
-        feature_extractor.save(str(fe_path))
+        X_train = feature_extractor.fit_transform(X_train_text, sparse=use_sparse)
+        X_test = feature_extractor.transform(X_test_text, sparse=use_sparse)
+        feature_time = time.time() - start_time
+
+        print(f"  Feature extraction completed in {feature_time:.2f}s")
+        print(f"  Feature matrix shape: {X_train.shape}")
+
+        # Save feature extractor
+        if config["output"].get("save_feature_extractor", True):
+            fe_path = output_dir / "feature_extractor.pkl"
+            feature_extractor.save(str(fe_path))
 
     # Train models
     results = {}
-    models_config = config["models"]
+    num_classes = len(train_df["label"].unique())
 
     for model_name, model_config in models_config.items():
         if not model_config.get("enabled", True):
@@ -173,17 +201,32 @@ def run_experiment(config_path: str) -> Dict[str, Any]:
         print(f"  Training {model_name}...")
 
         try:
-            model = create_model(model_name, model_config)
+            if model_name == "transformer":
+                model_config_copy = dict(model_config)
+                model_config_copy["num_labels"] = num_classes
+                model = create_model(model_name, model_config_copy)
 
-            # Train
-            start_time = time.time()
-            model.fit(X_train, y_train)
-            train_time = time.time() - start_time
+                # Train on raw texts
+                start_time = time.time()
+                model.fit(X_train_text, y_train)
+                train_time = time.time() - start_time
 
-            # Evaluate
-            start_time = time.time()
-            eval_results = model.evaluate(X_test, y_test)
-            eval_time = time.time() - start_time
+                # Evaluate on raw texts
+                start_time = time.time()
+                eval_results = model.evaluate(X_test_text, y_test)
+                eval_time = time.time() - start_time
+            else:
+                model = create_model(model_name, model_config)
+
+                # Train with TF-IDF features
+                start_time = time.time()
+                model.fit(X_train, y_train)
+                train_time = time.time() - start_time
+
+                # Evaluate
+                start_time = time.time()
+                eval_results = model.evaluate(X_test, y_test)
+                eval_time = time.time() - start_time
 
             # Add timing
             eval_results["train_time"] = train_time
@@ -199,8 +242,12 @@ def run_experiment(config_path: str) -> Dict[str, Any]:
 
             # Save model
             if config["output"].get("save_models", True):
-                model_path = output_dir / f"{model_name}.pkl"
-                model.save(str(model_path))
+                if model_name == "transformer":
+                    model_path = output_dir / "transformer.dir"
+                    model.save(str(model_path))
+                else:
+                    model_path = output_dir / f"{model_name}.pkl"
+                    model.save(str(model_path))
 
             results[model_name] = eval_results
 

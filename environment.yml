@@ -141,6 +141,10 @@ dependencies:
       - tzdata==2025.3
       - uritemplate==4.2.0
       - urllib3==2.6.3
+      - accelerate>=0.25.0
+      - peft>=0.7.0
+      - torch>=2.0.0
+      - transformers>=4.35.0
       - watchdog==6.0.0
       - websockets==15.0.1
       - xxhash==3.6.0

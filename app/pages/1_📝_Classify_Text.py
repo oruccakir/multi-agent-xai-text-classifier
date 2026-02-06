@@ -41,8 +41,9 @@ st.set_page_config(
 # Model directory
 MODELS_DIR = project_root / "data" / "models"
 
-# Available models
-AVAILABLE_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression"]
+# Available models (sklearn models that use TF-IDF)
+SKLEARN_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression"]
+AVAILABLE_MODELS = SKLEARN_MODELS + ["transformer"]
 
 # Example texts for quick testing
 EXAMPLE_TEXTS = {
@@ -64,6 +65,7 @@ MODEL_DISPLAY_NAMES = {
     "random_forest": "Random Forest",
     "knn": "KNN",
     "logistic_regression": "Logistic Regression",
+    "transformer": "Transformer",
 }
 
 # Initialize session state
@@ -81,9 +83,13 @@ def get_available_experiments():
             if exp_dir.is_dir() and not exp_dir.name.startswith('.'):
                 has_models = False
                 for dataset_dir in exp_dir.iterdir():
-                    if dataset_dir.is_dir() and (dataset_dir / "feature_extractor.pkl").exists():
-                        has_models = True
-                        break
+                    if dataset_dir.is_dir():
+                        # Check for sklearn models (need feature_extractor) or transformer
+                        has_sklearn = (dataset_dir / "feature_extractor.pkl").exists()
+                        has_transformer = (dataset_dir / "transformer.dir").exists()
+                        if has_sklearn or has_transformer:
+                            has_models = True
+                            break
                 if has_models:
                     experiments.append({
                         "name": exp_dir.name,
@@ -96,8 +102,12 @@ def get_available_datasets_for_experiment(exp_path: Path):
     """Get list of datasets available in an experiment."""
     datasets = []
     for dataset_dir in sorted(exp_path.iterdir()):
-        if dataset_dir.is_dir() and (dataset_dir / "feature_extractor.pkl").exists():
-            datasets.append(dataset_dir.name)
+        if dataset_dir.is_dir():
+            # Include if has sklearn models (feature_extractor) or transformer
+            has_sklearn = (dataset_dir / "feature_extractor.pkl").exists()
+            has_transformer = (dataset_dir / "transformer.dir").exists()
+            if has_sklearn or has_transformer:
+                datasets.append(dataset_dir.name)
     return datasets
 
 
@@ -106,9 +116,13 @@ def get_available_models_for_dataset(exp_path: Path, dataset: str):
     available = []
     dataset_path = exp_path / dataset
     if dataset_path.exists():
-        for model_name in AVAILABLE_MODELS:
+        # Check sklearn models (.pkl files)
+        for model_name in SKLEARN_MODELS:
             if (dataset_path / f"{model_name}.pkl").exists():
                 available.append(model_name)
+        # Check transformer model (.dir folder)
+        if (dataset_path / "transformer.dir").exists():
+            available.append("transformer")
     return available
 
 
@@ -133,26 +147,39 @@ def get_xai_agent(api_key: str = None):
 
 @st.cache_resource
 def load_model_and_extractor(exp_path: str, dataset: str, model_name: str):
-    """Load model and feature extractor."""
-    fe_path = Path(exp_path) / dataset / "feature_extractor.pkl"
-    model_path = Path(exp_path) / dataset / f"{model_name}.pkl"
+    """Load model and feature extractor (feature_extractor may be None for transformers)."""
+    if model_name == "transformer":
+        # Transformer model - load from directory, no feature extractor needed
+        from src.models.transformer import TransformerClassifier
+        model_path = Path(exp_path) / dataset / "transformer.dir"
+        model = TransformerClassifier.load(str(model_path))
+        return model, None
+    else:
+        # sklearn model - load model and feature extractor
+        fe_path = Path(exp_path) / dataset / "feature_extractor.pkl"
+        model_path = Path(exp_path) / dataset / f"{model_name}.pkl"
+        feature_extractor = FeatureExtractor.load(str(fe_path))
+        model = BaseModel.load(str(model_path))
+        return model, feature_extractor
 
-    feature_extractor = FeatureExtractor.load(str(fe_path))
-    model = BaseModel.load(str(model_path))
 
-    return model, feature_extractor
-
-
-def create_predict_proba_fn(model, feature_extractor, preprocessor):
+def create_predict_proba_fn(model, feature_extractor, preprocessor, is_transformer: bool = False):
     """Create a predict_proba function for LIME/SHAP."""
-    def predict_proba(texts):
-        # Preprocess texts
-        processed = [preprocessor.preprocess(t) for t in texts]
-        # Extract features
-        features = feature_extractor.transform(processed)
-        # Get probabilities
-        return model.predict_proba(features)
-    return predict_proba
+    if is_transformer:
+        # Transformer uses raw text directly
+        def predict_proba(texts):
+            return model.predict_proba(list(texts))
+        return predict_proba
+    else:
+        # sklearn model uses TF-IDF features
+        def predict_proba(texts):
+            # Preprocess texts
+            processed = [preprocessor.preprocess(t) for t in texts]
+            # Extract features
+            features = feature_extractor.transform(processed)
+            # Get probabilities
+            return model.predict_proba(features)
+        return predict_proba
 
 
 def plot_lime_explanation(lime_data: dict, prediction: str):
@@ -470,7 +497,8 @@ def main():
 
             # Create predict_proba function for LIME/SHAP
             preprocessor = TextPreprocessor(language=language)
-            predict_proba_fn = create_predict_proba_fn(model, feature_extractor, preprocessor)
+            is_transformer = selected_model == "transformer"
+            predict_proba_fn = create_predict_proba_fn(model, feature_extractor, preprocessor, is_transformer)
 
             # Generate explanation with LIME and SHAP
             xai_result = xai_agent.generate_explanation(

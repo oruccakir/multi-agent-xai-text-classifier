@@ -32,6 +32,7 @@ from src.models.svm import SVMClassifier
 from src.models.random_forest import RandomForestClassifier
 from src.models.knn import KNNClassifier
 from src.models.logistic_regression import LogisticRegressionClassifier
+from src.models.transformer import TransformerClassifier
 
 # Page configuration
 st.set_page_config(
@@ -239,6 +240,127 @@ MODELS_INFO = {
             },
         }
     },
+    "transformer": {
+        "name": "Transformer",
+        "description": "HuggingFace transformer. State-of-the-art accuracy, GPU recommended.",
+        "icon": "🤖",
+        "params": {
+            "model_name": {
+                "type": "text",
+                "default": "distilbert-base-uncased",
+                "help": "🎯 **HuggingFace Model ID**\n\n"
+                        "• Any model from huggingface.co/models\n"
+                        "• **distilbert-base-uncased:** Fast English model\n"
+                        "• **bert-base-uncased:** Standard English BERT\n"
+                        "• **dbmdz/bert-base-turkish-cased:** Turkish BERT\n"
+                        "• **xlm-roberta-base:** Multilingual model"
+            },
+            "fine_tune_mode": {
+                "type": "select",
+                "default": "head_only",
+                "options": ["head_only", "full", "lora"],
+                "help": "🎯 **Fine-tuning Strategy**\n\n"
+                        "• **head_only:** Freeze base, train classifier head only. Fastest, least memory.\n"
+                        "• **full:** Train all parameters. Best accuracy, most memory.\n"
+                        "• **lora:** Low-Rank Adaptation. Good accuracy with low memory overhead."
+            },
+            "epochs": {
+                "type": "int",
+                "default": 3,
+                "min": 1,
+                "max": 20,
+                "step": 1,
+                "help": "🎯 **Training Epochs**\n\n"
+                        "• **1-2:** Quick training, may underfit\n"
+                        "• **3-5:** Good balance for most tasks\n"
+                        "• **10+:** Risk of overfitting, use with care"
+            },
+            "learning_rate": {
+                "type": "float_scientific",
+                "default": 2e-5,
+                "options": [1e-5, 2e-5, 3e-5, 5e-5, 1e-4, 2e-4],
+                "help": "🎯 **Learning Rate**\n\n"
+                        "• **1e-5 - 2e-5:** Conservative, good for full fine-tuning\n"
+                        "• **3e-5 - 5e-5:** Standard range for most tasks\n"
+                        "• **1e-4 - 2e-4:** Aggressive, good for head_only or LoRA"
+            },
+            "batch_size": {
+                "type": "select_int",
+                "default": 16,
+                "options": [4, 8, 16, 32, 64],
+                "help": "🎯 **Batch Size**\n\n"
+                        "• **4-8:** Low memory, slower training\n"
+                        "• **16:** Good default\n"
+                        "• **32-64:** Faster but requires more GPU memory"
+            },
+            "max_length": {
+                "type": "select_int",
+                "default": 256,
+                "options": [64, 128, 256, 512],
+                "help": "🎯 **Max Sequence Length**\n\n"
+                        "• **64-128:** Short texts (tweets, titles)\n"
+                        "• **256:** Medium texts (reviews, paragraphs)\n"
+                        "• **512:** Long texts (articles). Uses more memory."
+            },
+        },
+        "conditional_params": {
+            "lora": {
+                "lora_r": {
+                    "type": "select_int",
+                    "default": 8,
+                    "options": [4, 8, 16, 32],
+                    "help": "🎯 **LoRA Rank**\n\n"
+                            "• **4:** Minimal parameters, fastest\n"
+                            "• **8:** Good default balance\n"
+                            "• **16-32:** More expressive, closer to full fine-tuning"
+                },
+                "lora_alpha": {
+                    "type": "select_int",
+                    "default": 16,
+                    "options": [8, 16, 32, 64],
+                    "help": "🎯 **LoRA Alpha (Scaling)**\n\n"
+                            "• Usually set to 2x lora_r\n"
+                            "• Higher values = stronger adaptation"
+                },
+                "lora_dropout": {
+                    "type": "float",
+                    "default": 0.1,
+                    "min": 0.0,
+                    "max": 0.5,
+                    "step": 0.05,
+                    "help": "🎯 **LoRA Dropout**\n\n"
+                            "• **0.0:** No dropout\n"
+                            "• **0.1:** Light regularization (default)\n"
+                            "• **0.3-0.5:** Strong regularization for small datasets"
+                },
+            },
+            "full": {
+                "weight_decay": {
+                    "type": "float",
+                    "default": 0.01,
+                    "min": 0.0,
+                    "max": 0.3,
+                    "step": 0.01,
+                    "help": "🎯 **Weight Decay**\n\n"
+                            "• **0.0:** No regularization\n"
+                            "• **0.01:** Standard for transformers\n"
+                            "• **0.1-0.3:** Strong regularization for small datasets"
+                },
+                "warmup_ratio": {
+                    "type": "float",
+                    "default": 0.1,
+                    "min": 0.0,
+                    "max": 0.3,
+                    "step": 0.05,
+                    "help": "🎯 **Warmup Ratio**\n\n"
+                            "• Fraction of training steps for learning rate warmup\n"
+                            "• **0.0:** No warmup\n"
+                            "• **0.1:** 10% warmup (recommended)\n"
+                            "• **0.2-0.3:** Longer warmup for stability"
+                },
+            },
+        },
+    },
 }
 
 # Preprocessing options with detailed tooltips
@@ -410,6 +532,21 @@ def create_model(model_name: str, params: dict):
             solver=params.get("solver", "lbfgs"),
             random_state=42,
         )
+    elif model_name == "transformer":
+        return TransformerClassifier(
+            model_name=params.get("model_name", "distilbert-base-uncased"),
+            num_labels=params.get("num_labels", 2),
+            fine_tune_mode=params.get("fine_tune_mode", "head_only"),
+            learning_rate=params.get("learning_rate", 2e-5),
+            batch_size=params.get("batch_size", 16),
+            epochs=params.get("epochs", 3),
+            max_length=params.get("max_length", 256),
+            lora_r=params.get("lora_r", 8),
+            lora_alpha=params.get("lora_alpha", 16),
+            lora_dropout=params.get("lora_dropout", 0.1),
+            warmup_ratio=params.get("warmup_ratio", 0.1),
+            weight_decay=params.get("weight_decay", 0.01),
+        )
     else:
         raise ValueError(f"Unknown model: {model_name}")
 
@@ -460,7 +597,11 @@ def train_models(
     X_test_text = test_df["text"].tolist()
     y_test = test_df["label"].values
 
-    # Preprocessing
+    # Separate sklearn and transformer models
+    sklearn_models = [m for m in selected_models if m != "transformer"]
+    has_transformer = "transformer" in selected_models
+
+    # Preprocessing (for sklearn TF-IDF pipeline)
     if progress_callback:
         progress_callback(0.1, "Preprocessing texts...")
 
@@ -475,37 +616,38 @@ def train_models(
         min_word_length=preprocessing_config.get("min_word_length", 2),
     )
 
-    X_train_text = [preprocessor.preprocess(text) for text in X_train_text]
-    X_test_text = [preprocessor.preprocess(text) for text in X_test_text]
-
-    # Feature extraction
-    if progress_callback:
-        progress_callback(0.15, "Extracting features...")
-
-    fe_start = time.time()
-    use_sparse = feature_config.get("sparse", True)
-
-    feature_extractor = FeatureExtractor(
-        method="tfidf",
-        max_features=feature_config.get("max_features", 10000),
-        ngram_range=tuple(feature_config.get("ngram_range", [1, 2])),
-        min_df=feature_config.get("min_df", 2),
-        max_df=feature_config.get("max_df", 0.95),
-        sublinear_tf=feature_config.get("sublinear_tf", True),
-    )
-
-    X_train = feature_extractor.fit_transform(X_train_text, sparse=use_sparse)
-    X_test = feature_extractor.transform(X_test_text, sparse=use_sparse)
-    results["feature_extraction_time"] = time.time() - fe_start
-    results["feature_shape"] = X_train.shape
+    X_train_preprocessed = [preprocessor.preprocess(text) for text in X_train_text]
+    X_test_preprocessed = [preprocessor.preprocess(text) for text in X_test_text]
 
     # Create output directory
     output_dir = MODELS_DIR / experiment_name / dataset["name"]
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Save feature extractor
-    fe_path = output_dir / "feature_extractor.pkl"
-    feature_extractor.save(str(fe_path))
+    # Feature extraction (only needed for sklearn models)
+    if sklearn_models:
+        if progress_callback:
+            progress_callback(0.15, "Extracting features...")
+
+        fe_start = time.time()
+        use_sparse = feature_config.get("sparse", True)
+
+        feature_extractor = FeatureExtractor(
+            method="tfidf",
+            max_features=feature_config.get("max_features", 10000),
+            ngram_range=tuple(feature_config.get("ngram_range", [1, 2])),
+            min_df=feature_config.get("min_df", 2),
+            max_df=feature_config.get("max_df", 0.95),
+            sublinear_tf=feature_config.get("sublinear_tf", True),
+        )
+
+        X_train = feature_extractor.fit_transform(X_train_preprocessed, sparse=use_sparse)
+        X_test = feature_extractor.transform(X_test_preprocessed, sparse=use_sparse)
+        results["feature_extraction_time"] = time.time() - fe_start
+        results["feature_shape"] = X_train.shape
+
+        # Save feature extractor
+        fe_path = output_dir / "feature_extractor.pkl"
+        feature_extractor.save(str(fe_path))
 
     # Train each model
     num_models = len(selected_models)
@@ -517,21 +659,43 @@ def train_models(
 
         try:
             params = model_params.get(model_name, {})
-            model = create_model(model_name, params)
 
-            # Train
-            train_start = time.time()
-            model.fit(X_train, y_train)
-            train_time = time.time() - train_start
+            if model_name == "transformer":
+                # Auto-detect num_labels
+                num_labels = len(results["classes"])
+                params["num_labels"] = num_labels
 
-            # Evaluate
-            eval_start = time.time()
-            eval_results = model.evaluate(X_test, y_test)
-            eval_time = time.time() - eval_start
+                model = create_model(model_name, params)
 
-            # Save model
-            model_path = output_dir / f"{model_name}.pkl"
-            model.save(str(model_path))
+                # Transformer uses raw texts directly
+                train_start = time.time()
+                model.fit(X_train_text, y_train)
+                train_time = time.time() - train_start
+
+                # Evaluate with raw texts
+                eval_start = time.time()
+                eval_results = model.evaluate(X_test_text, y_test)
+                eval_time = time.time() - eval_start
+
+                # Save as directory (not .pkl)
+                model_path = output_dir / "transformer.dir"
+                model.save(str(model_path))
+            else:
+                model = create_model(model_name, params)
+
+                # Train with TF-IDF features
+                train_start = time.time()
+                model.fit(X_train, y_train)
+                train_time = time.time() - train_start
+
+                # Evaluate
+                eval_start = time.time()
+                eval_results = model.evaluate(X_test, y_test)
+                eval_time = time.time() - eval_start
+
+                # Save model
+                model_path = output_dir / f"{model_name}.pkl"
+                model.save(str(model_path))
 
             results["models"][model_name] = {
                 "accuracy": eval_results["accuracy"],
@@ -569,7 +733,7 @@ def train_models(
 
     # Build models config with enabled flag
     models_config = {}
-    all_model_names = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression"]
+    all_model_names = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression", "transformer"]
     for model_name in all_model_names:
         if model_name in selected_models:
             model_cfg = {"enabled": True}
@@ -1008,6 +1172,65 @@ def main():
                                         key=f"{model_key}_{param_name}",
                                         help=param_config["help"],
                                     )
+                                elif param_config["type"] == "text":
+                                    params[param_name] = st.text_input(
+                                        param_name,
+                                        value=param_config["default"],
+                                        key=f"{model_key}_{param_name}",
+                                        help=param_config["help"],
+                                    )
+                                elif param_config["type"] == "float_scientific":
+                                    options = param_config["options"]
+                                    option_labels = [f"{v:.0e}" for v in options]
+                                    default_idx = options.index(param_config["default"])
+                                    selected_label = st.selectbox(
+                                        param_name,
+                                        options=option_labels,
+                                        index=default_idx,
+                                        key=f"{model_key}_{param_name}",
+                                        help=param_config["help"],
+                                    )
+                                    params[param_name] = options[option_labels.index(selected_label)]
+                                elif param_config["type"] == "select_int":
+                                    options = param_config["options"]
+                                    default_idx = options.index(param_config["default"])
+                                    params[param_name] = st.selectbox(
+                                        param_name,
+                                        options=options,
+                                        index=default_idx,
+                                        key=f"{model_key}_{param_name}",
+                                        help=param_config["help"],
+                                    )
+
+                            # Conditional parameters (e.g., LoRA or full fine-tune specific)
+                            conditional = model_info.get("conditional_params", {})
+                            if conditional:
+                                mode_key = params.get("fine_tune_mode", "")
+                                mode_params = conditional.get(mode_key, {})
+                                if mode_params:
+                                    st.markdown(f"**{mode_key} settings:**")
+                                    for cp_name, cp_config in mode_params.items():
+                                        if cp_config["type"] == "float":
+                                            params[cp_name] = st.slider(
+                                                cp_name,
+                                                min_value=float(cp_config["min"]),
+                                                max_value=float(cp_config["max"]),
+                                                value=float(cp_config["default"]),
+                                                step=float(cp_config.get("step", 0.01)),
+                                                key=f"{model_key}_{cp_name}",
+                                                help=cp_config["help"],
+                                            )
+                                        elif cp_config["type"] == "select_int":
+                                            options = cp_config["options"]
+                                            default_idx = options.index(cp_config["default"])
+                                            params[cp_name] = st.selectbox(
+                                                cp_name,
+                                                options=options,
+                                                index=default_idx,
+                                                key=f"{model_key}_{cp_name}",
+                                                help=cp_config["help"],
+                                            )
+
                             model_params[model_key] = params
 
         st.session_state.selected_models = selected_models

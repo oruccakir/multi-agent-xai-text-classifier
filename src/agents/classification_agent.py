@@ -67,9 +67,8 @@ class ClassificationAgent(BaseAgent):
                 "probabilities": {},
             }
 
-        # Load model and feature extractor
+        # Load model
         model = self._load_model(experiment_path, dataset, model_name)
-        feature_extractor = self._load_feature_extractor(experiment_path, dataset)
 
         if model is None:
             return {
@@ -79,28 +78,40 @@ class ClassificationAgent(BaseAgent):
                 "probabilities": {},
             }
 
-        if feature_extractor is None:
-            return {
-                "error": "Failed to load feature extractor",
-                "prediction": None,
-                "confidence": 0.0,
-                "probabilities": {},
-            }
+        is_transformer = model_name == "transformer"
 
-        # Preprocess text
-        preprocessor = self._get_preprocessor(language)
-        processed_text = preprocessor.preprocess(text)
+        if is_transformer:
+            # Transformer uses raw text directly
+            prediction = model.predict([text])[0]
+            probabilities = model.predict_proba([text])[0]
+            confidence = float(max(probabilities))
+            prob_dict = dict(zip(model.classes_, [float(p) for p in probabilities]))
 
-        # Extract features
-        features = feature_extractor.transform([processed_text])
+            preprocessor = self._get_preprocessor(language)
+            processed_text = preprocessor.preprocess(text)
+        else:
+            feature_extractor = self._load_feature_extractor(experiment_path, dataset)
 
-        # Classify
-        prediction = model.predict(features)[0]
-        probabilities = model.predict_proba(features)[0]
-        confidence = float(max(probabilities))
+            if feature_extractor is None:
+                return {
+                    "error": "Failed to load feature extractor",
+                    "prediction": None,
+                    "confidence": 0.0,
+                    "probabilities": {},
+                }
 
-        # Create probability dict
-        prob_dict = dict(zip(model.classes_, [float(p) for p in probabilities]))
+            # Preprocess text
+            preprocessor = self._get_preprocessor(language)
+            processed_text = preprocessor.preprocess(text)
+
+            # Extract features
+            features = feature_extractor.transform([processed_text])
+
+            # Classify
+            prediction = model.predict(features)[0]
+            probabilities = model.predict_proba(features)[0]
+            confidence = float(max(probabilities))
+            prob_dict = dict(zip(model.classes_, [float(p) for p in probabilities]))
 
         return {
             "prediction": prediction,
@@ -214,7 +225,7 @@ class ClassificationAgent(BaseAgent):
         Returns:
             List of available model names
         """
-        available_models = [
+        sklearn_models = [
             "naive_bayes", "svm", "random_forest", "knn", "logistic_regression"
         ]
         dataset_path = Path(experiment_path) / dataset
@@ -222,10 +233,16 @@ class ClassificationAgent(BaseAgent):
         if not dataset_path.exists():
             return []
 
-        return [
-            model_name for model_name in available_models
+        found = [
+            model_name for model_name in sklearn_models
             if (dataset_path / f"{model_name}.pkl").exists()
         ]
+
+        # Check for transformer model (saved as directory)
+        if (dataset_path / "transformer.dir").exists():
+            found.append("transformer")
+
+        return found
 
     def _load_model(
         self, experiment_path: str, dataset: str, model_name: str
@@ -236,20 +253,32 @@ class ClassificationAgent(BaseAgent):
         if cache_key in self._models_cache:
             return self._models_cache[cache_key]
 
-        model_path = Path(experiment_path) / dataset / f"{model_name}.pkl"
-
-        if not model_path.exists():
-            print(f"Model not found: {model_path}")
-            return None
-
-        try:
-            from src.models.base_model import BaseModel
-            model = BaseModel.load(str(model_path))
-            self._models_cache[cache_key] = model
-            return model
-        except Exception as e:
-            print(f"Failed to load model: {e}")
-            return None
+        if model_name == "transformer":
+            model_path = Path(experiment_path) / dataset / "transformer.dir"
+            if not model_path.exists():
+                print(f"Transformer model not found: {model_path}")
+                return None
+            try:
+                from src.models.transformer import TransformerClassifier
+                model = TransformerClassifier.load(str(model_path))
+                self._models_cache[cache_key] = model
+                return model
+            except Exception as e:
+                print(f"Failed to load transformer model: {e}")
+                return None
+        else:
+            model_path = Path(experiment_path) / dataset / f"{model_name}.pkl"
+            if not model_path.exists():
+                print(f"Model not found: {model_path}")
+                return None
+            try:
+                from src.models.base_model import BaseModel
+                model = BaseModel.load(str(model_path))
+                self._models_cache[cache_key] = model
+                return model
+            except Exception as e:
+                print(f"Failed to load model: {e}")
+                return None
 
     def _load_feature_extractor(
         self, experiment_path: str, dataset: str
