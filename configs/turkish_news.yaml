@@ -1,0 +1,90 @@
+experiment:
+  name: "turkish_news_all_models"
+  description: "Turkish news classification - 7-class, balanced, 3920 samples (SMALL), very long Turkish texts"
+
+dataset:
+  name: "turkish_news"
+  train_path: "data/processed/turkish_news_train.csv"
+  test_path: "data/processed/turkish_news_test.csv"
+  sample_size: null      # 3.9K is small; use all data
+
+feature_extraction:
+  method: "tfidf"
+  max_features: 20000    # Small dataset → smaller vocabulary to avoid overfitting
+  ngram_range: [1, 3]    # Trigrams for Turkish: topic-specific phrases matter
+  min_df: 1              # Only 3.9K samples → include all tokens (no filtering)
+  max_df: 0.95
+  sublinear_tf: true
+  sparse: true
+
+models:
+  naive_bayes:
+    enabled: true
+    alpha: 1.0
+    # Full Laplace smoothing: small dataset (3.9K / 7 classes = ~560/class).
+    # Many TF-IDF features will be zero → smoothing prevents zero-probability crash.
+
+  svm:
+    enabled: true
+    C: 0.1
+    max_iter: 3000
+    # C=0.1: strong regularization for small dataset (prevent overfitting).
+    # max_iter=3000: 7-class LinearSVC may need more iterations to converge.
+
+  random_forest:
+    enabled: true
+    n_estimators: 200
+    max_depth: 15          # Cap depth: 3.9K samples → uncapped trees will overfit
+    min_samples_split: 5
+    n_jobs: -1
+
+  knn:
+    enabled: true
+    n_neighbors: 3
+    # n_neighbors=3: small dataset → larger k loses locality.
+    # With 560 samples/class, k=3 gives meaningful local neighborhoods.
+    metric: "cosine"
+    weights: "distance"
+    algorithm: "brute"
+    n_jobs: -1
+
+  logistic_regression:
+    enabled: true
+    C: 0.1                 # Strong regularization for small 7-class dataset
+    max_iter: 2000         # More iterations for 7-class convergence
+    solver: "lbfgs"        # lbfgs: robust for small multiclass problems
+
+  decision_tree:
+    enabled: true
+    max_depth: 10          # Shallow tree: 3.9K samples + 7 classes
+    min_samples_split: 5
+    min_samples_leaf: 3
+    criterion: "entropy"   # Entropy (info gain) tends to create more balanced splits
+                           # for multiclass problems vs gini
+
+  xgboost:
+    enabled: true
+    n_estimators: 100      # Fewer trees: small dataset
+    max_depth: 4           # Very shallow: prevent overfitting on 3.9K
+    learning_rate: 0.05    # Slow learning: compensates for few samples
+    subsample: 0.7         # More subsampling: regularization effect
+    colsample_bytree: 0.7
+    n_jobs: -1
+
+  transformer:
+    enabled: true
+    model_name: "dbmdz/bert-base-turkish-cased"   # Turkish BERT is essential here
+    fine_tune_mode: "full"
+    learning_rate: 3.0e-5  # Slightly higher lr: small dataset needs faster adaptation
+    batch_size: 8          # Small batch: texts avg 1981 chars (~500 tokens)
+    epochs: 5              # More epochs: 3.9K is small (490 steps/epoch at batch=8)
+    max_length: 512        # Long texts avg 1981 chars (~500 tokens); use full 512
+    lora_r: 8
+    lora_alpha: 16
+    lora_dropout: 0.1
+    warmup_ratio: 0.1
+    weight_decay: 0.01
+
+output:
+  save_models: true
+  save_feature_extractor: true
