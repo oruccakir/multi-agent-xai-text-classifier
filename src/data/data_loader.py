@@ -13,7 +13,7 @@ class DataLoader:
     - Turkish News (TTC4900)
     """
 
-    SUPPORTED_DATASETS = ["imdb", "turkish_sentiment", "ag_news", "turkish_news"]
+    SUPPORTED_DATASETS = ["imdb", "turkish_sentiment", "ag_news", "turkish_news", "intent_classifier"]
 
     # Label mappings for each dataset
     LABEL_MAPS = {
@@ -28,6 +28,12 @@ class DataLoader:
             4: "saglik",
             5: "spor",
             6: "teknoloji",
+        },
+        "intent_classifier": {
+            "imdb": "imdb",
+            "turkish_sentiment": "turkish_sentiment",
+            "ag_news": "ag_news",
+            "turkish_news": "turkish_news",
         },
     }
 
@@ -156,6 +162,25 @@ class DataLoader:
 
         return texts, labels
 
+    def _load_intent_classifier(self, split: str) -> Tuple[List[str], List[str]]:
+        """Load intent classifier dataset from local CSV."""
+        import pandas as pd
+
+        intent_dir = self.data_dir / "intent_classifier"
+        filepath = intent_dir / f"intent_{split}.csv"
+
+        if not filepath.exists():
+            raise FileNotFoundError(
+                f"Intent classifier dataset not found at {filepath}. "
+                f"Run scripts/create_intent_dataset.py first."
+            )
+
+        df = pd.read_csv(filepath)
+        texts = df["text"].astype(str).tolist()
+        labels = df["label"].astype(str).tolist()
+
+        return texts, labels
+
     def get_dataset_info(self, dataset_name: str) -> Dict:
         """Get information about a dataset."""
         info = {
@@ -190,6 +215,14 @@ class DataLoader:
                 "num_classes": 7,
                 "description": "Turkish news topic classification (TTC4900)",
                 "source": "huggingface:savasy/ttc4900",
+            },
+            "intent_classifier": {
+                "language": "mixed",
+                "task": "intent_classification",
+                "classes": list(self.LABEL_MAPS["intent_classifier"].values()),
+                "num_classes": 4,
+                "description": "Intent classifier: predicts which dataset a text belongs to",
+                "source": "local:data/intent_classifier",
             },
         }
         return info.get(dataset_name, {})

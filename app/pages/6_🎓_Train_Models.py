@@ -472,15 +472,23 @@ if "selected_device" not in st.session_state:
 def get_available_datasets():
     """Get list of available datasets from processed data directory."""
     datasets = []
-    if DATA_DIR.exists():
-        # Find unique dataset names (files ending with _train.csv)
-        for f in DATA_DIR.glob("*_train.csv"):
-            name = f.stem.replace("_train", "")
-            test_file = DATA_DIR / f"{name}_test.csv"
+
+    # Search dirs: processed + intent_classifier (with renamed pattern intent_<split>.csv)
+    search_configs = [
+        (DATA_DIR, "*_train.csv", lambda stem: stem.replace("_train", ""), lambda name, d: d / f"{name}_test.csv"),
+        (project_root / "data" / "intent_classifier", "intent_train.csv",
+         lambda stem: "intent_classifier", lambda name, d: d / "intent_test.csv"),
+    ]
+
+    for search_dir, pattern, name_fn, test_path_fn in search_configs:
+        if not search_dir.exists():
+            continue
+        for f in search_dir.glob(pattern):
+            name = name_fn(f.stem)
+            test_file = test_path_fn(name, search_dir)
             if test_file.exists():
                 train_df = pd.read_csv(f, nrows=5)
                 if "text" in train_df.columns and "label" in train_df.columns:
-                    # Get dataset info
                     train_size = sum(1 for _ in open(f)) - 1
                     test_size = sum(1 for _ in open(test_file)) - 1
                     datasets.append({

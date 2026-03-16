@@ -55,13 +55,24 @@ DATASETS = {
         "icon": "🗞️",
         "description": "Turkish news articles from 7 different categories",
     },
+    "intent_classifier": {
+        "name": "Intent Classifier",
+        "language": "Mixed (EN/TR)",
+        "task": "4-Class Intent",
+        "classes": ["imdb", "turkish_sentiment", "ag_news", "turkish_news"],
+        "icon": "🎯",
+        "description": "Predicts which dataset a text belongs to (cross-dataset intent detection)",
+    },
 }
 
 
 @st.cache_data
 def load_dataset(dataset_name: str, split: str) -> pd.DataFrame:
     """Load dataset from processed CSV files."""
-    file_path = project_root / "data" / "processed" / f"{dataset_name}_{split}.csv"
+    if dataset_name == "intent_classifier":
+        file_path = project_root / "data" / "intent_classifier" / f"intent_{split}.csv"
+    else:
+        file_path = project_root / "data" / "processed" / f"{dataset_name}_{split}.csv"
     if file_path.exists():
         return pd.read_csv(file_path)
     return None
@@ -76,7 +87,7 @@ def main():
     # Dataset overview
     st.markdown("### 📊 Dataset Overview")
 
-    cols = st.columns(4)
+    cols = st.columns(5)
     for i, (key, info) in enumerate(DATASETS.items()):
         with cols[i]:
             with st.container(border=True):
