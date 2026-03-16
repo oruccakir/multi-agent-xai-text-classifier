@@ -149,4 +149,3 @@ dependencies:
       - websockets==15.0.1
       - xxhash==3.6.0
       - yarl==1.22.0
-prefix: /home/cakir/anaconda3/envs/xai-classifier
