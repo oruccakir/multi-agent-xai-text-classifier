@@ -36,7 +36,7 @@ st.set_page_config(
 MODELS_DIR = project_root / "data" / "models"
 
 # Available models
-AVAILABLE_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression", "transformer"]
+AVAILABLE_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression", "xgboost", "decision_tree", "transformer"]
 
 # Example texts for quick testing
 COMPARISON_EXAMPLES = {
@@ -83,6 +83,18 @@ MODELS = {
         "type": "Linear",
         "description": "Linear model with sigmoid activation for probabilities",
         "icon": "📈",
+    },
+    "xgboost": {
+        "name": "XGBoost",
+        "type": "Gradient Boosting",
+        "description": "Gradient boosted trees, high accuracy on structured features",
+        "icon": "⚡",
+    },
+    "decision_tree": {
+        "name": "Decision Tree",
+        "type": "Tree-based",
+        "description": "Single decision tree, fully interpretable",
+        "icon": "🌿",
     },
     "transformer": {
         "name": "Transformer",

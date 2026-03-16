@@ -33,6 +33,8 @@ from src.models.random_forest import RandomForestClassifier
 from src.models.knn import KNNClassifier
 from src.models.logistic_regression import LogisticRegressionClassifier
 from src.models.transformer import TransformerClassifier
+from src.models.xgboost_model import XGBoostClassifier
+from src.models.decision_tree import DecisionTreeClassifier
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
@@ -76,6 +78,24 @@ def create_model(model_name: str, model_config: Dict[str, Any]):
             solver=model_config.get("solver", "lbfgs"),
             random_state=42,
         )
+    elif model_name == "xgboost":
+        return XGBoostClassifier(
+            n_estimators=model_config.get("n_estimators", 100),
+            max_depth=model_config.get("max_depth", 6),
+            learning_rate=model_config.get("learning_rate", 0.1),
+            subsample=model_config.get("subsample", 0.8),
+            colsample_bytree=model_config.get("colsample_bytree", 0.8),
+            n_jobs=model_config.get("n_jobs", -1),
+            random_state=42,
+        )
+    elif model_name == "decision_tree":
+        return DecisionTreeClassifier(
+            max_depth=model_config.get("max_depth"),
+            min_samples_split=model_config.get("min_samples_split", 2),
+            min_samples_leaf=model_config.get("min_samples_leaf", 1),
+            criterion=model_config.get("criterion", "gini"),
+            random_state=42,
+        )
     elif model_name == "transformer":
         return TransformerClassifier(
             model_name=model_config.get("model_name", "distilbert-base-uncased"),
@@ -108,6 +128,9 @@ def load_data(config: Dict[str, Any]) -> tuple:
     print(f"  Loading test data from {test_path}...")
     test_df = pd.read_csv(test_path)
 
+    # Detect all classes from full data before sampling to avoid missing rare classes
+    all_classes = sorted(train_df["label"].unique().tolist())
+
     # Sample if specified
     sample_size = dataset_config.get("sample_size")
     if sample_size:
@@ -118,7 +141,7 @@ def load_data(config: Dict[str, Any]) -> tuple:
         print(f"  Sampling {test_sample} test examples...")
         test_df = test_df.sample(n=test_sample, random_state=42)
 
-    return train_df, test_df
+    return train_df, test_df, all_classes
 
 
 def run_experiment(config_path: str) -> Dict[str, Any]:
@@ -137,10 +160,10 @@ def run_experiment(config_path: str) -> Dict[str, Any]:
     print(f"Output directory: {output_dir}")
 
     # Load data
-    train_df, test_df = load_data(config)
+    train_df, test_df, all_classes = load_data(config)
     print(f"  Training samples: {len(train_df)}")
     print(f"  Test samples: {len(test_df)}")
-    print(f"  Classes: {train_df['label'].unique().tolist()}")
+    print(f"  Classes: {all_classes}")
 
     # Get texts and labels
     X_train_text = train_df["text"].tolist()
@@ -190,7 +213,7 @@ def run_experiment(config_path: str) -> Dict[str, Any]:
 
     # Train models
     results = {}
-    num_classes = len(train_df["label"].unique())
+    num_classes = len(all_classes)
 
     for model_name, model_config in models_config.items():
         if not model_config.get("enabled", True):
@@ -284,7 +307,10 @@ def save_experiment_results(config: Dict, results: Dict, output_dir: Path):
             summary["results"][model_name] = {
                 k: v.tolist() if isinstance(v, np.ndarray) else v
                 for k, v in metrics.items()
+                if k != "roc_curves"
             }
+            # roc_curves is already serializable (dict of lists)
+            summary["results"][model_name]["roc_curves"] = metrics.get("roc_curves", {})
 
     # Save as JSON
     results_path = output_dir / "experiment_results.json"

@@ -141,6 +141,7 @@ dependencies:
       - tzdata==2025.3
       - uritemplate==4.2.0
       - urllib3==2.6.3
+      - xgboost>=2.0.0
       - accelerate>=0.25.0
       - peft>=0.7.0
       - torch>=2.0.0

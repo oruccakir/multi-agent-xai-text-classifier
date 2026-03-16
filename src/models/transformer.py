@@ -218,31 +218,6 @@ class TransformerClassifier(BaseModel):
 
         return np.vstack(all_probs)
 
-    def evaluate(self, X_texts, y) -> dict:
-        """Evaluate the model on test data (accepts raw texts)."""
-        y_pred = self.predict(X_texts)
-        y = np.asarray(y)
-
-        from sklearn.metrics import (
-            accuracy_score,
-            classification_report,
-            confusion_matrix,
-            f1_score,
-            precision_score,
-            recall_score,
-        )
-
-        return {
-            "model_name": self.name,
-            "accuracy": accuracy_score(y, y_pred),
-            "f1_macro": f1_score(y, y_pred, average="macro"),
-            "f1_weighted": f1_score(y, y_pred, average="weighted"),
-            "precision": precision_score(y, y_pred, average="weighted", zero_division=0),
-            "recall": recall_score(y, y_pred, average="weighted", zero_division=0),
-            "confusion_matrix": confusion_matrix(y, y_pred),
-            "classification_report": classification_report(y, y_pred, output_dict=True, zero_division=0),
-        }
-
     def save(self, path: str) -> None:
         """Save the transformer model to a directory."""
         save_dir = Path(path)

@@ -230,7 +230,7 @@ class ClassificationAgent(BaseAgent):
             List of available model names
         """
         sklearn_models = [
-            "naive_bayes", "svm", "random_forest", "knn", "logistic_regression"
+            "naive_bayes", "svm", "random_forest", "knn", "logistic_regression", "xgboost", "decision_tree"
         ]
         dataset_path = Path(experiment_path) / dataset
 

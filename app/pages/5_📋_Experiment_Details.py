@@ -35,6 +35,9 @@ MODEL_DISPLAY_NAMES = {
     "random_forest": "Random Forest",
     "knn": "KNN",
     "logistic_regression": "Logistic Regression",
+    "xgboost": "XGBoost",
+    "decision_tree": "Decision Tree",
+    "transformer": "Transformer",
 }
 
 MODEL_ICONS = {
@@ -43,6 +46,9 @@ MODEL_ICONS = {
     "random_forest": "🌲",
     "knn": "🎯",
     "logistic_regression": "📈",
+    "xgboost": "⚡",
+    "decision_tree": "🌿",
+    "transformer": "🤖",
 }
 
 
@@ -172,62 +178,88 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
     """Display model performance comparison charts."""
     st.markdown("### 📊 Model Performance Comparison")
 
-    # Add display names
+    # Add display names and sort
+    metrics_df = metrics_df.copy()
     metrics_df["Model"] = metrics_df["model"].map(
-        lambda x: f"{MODEL_ICONS.get(x, '📦')} {MODEL_DISPLAY_NAMES.get(x, x)}"
+        lambda x: MODEL_DISPLAY_NAMES.get(x, x)
     )
-
-    # Sort by F1 score
     metrics_df = metrics_df.sort_values("f1_macro", ascending=False)
 
+    models = metrics_df["Model"].tolist()
+
+    # ── Grouped bar: Accuracy, F1 Macro, Precision, Recall ──────────────────
+    fig = go.Figure()
+    for col, label, color in [
+        ("accuracy",  "Accuracy",    "#2196F3"),
+        ("f1_macro",  "F1 (Macro)",  "#4CAF50"),
+        ("precision", "Precision",   "#FF9800"),
+        ("recall",    "Recall",      "#E91E63"),
+    ]:
+        fig.add_trace(go.Bar(
+            name=label,
+            x=models,
+            y=metrics_df[col].tolist(),
+            marker_color=color,
+        ))
+
+    fig.update_layout(
+        title="Model Performance Comparison",
+        barmode="group",
+        yaxis_title="Score",
+        yaxis_tickformat=".0%",
+        yaxis_range=[0, 1.05],
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        height=420,
+        xaxis_title="",
+    )
+    st.plotly_chart(fig, width="stretch")
+
+    # ── Second row: F1 Macro vs Weighted  |  Training Time ──────────────────
     col1, col2 = st.columns(2)
 
     with col1:
-        # Accuracy and F1 comparison
-        fig = go.Figure()
-
-        fig.add_trace(go.Bar(
-            name="Accuracy",
-            x=metrics_df["Model"],
-            y=metrics_df["accuracy"],
-            marker_color="#2196F3",
-        ))
-
-        fig.add_trace(go.Bar(
+        fig2 = go.Figure()
+        fig2.add_trace(go.Bar(
             name="F1 (Macro)",
-            x=metrics_df["Model"],
-            y=metrics_df["f1_macro"],
+            x=models,
+            y=metrics_df["f1_macro"].tolist(),
             marker_color="#4CAF50",
         ))
-
-        fig.update_layout(
-            title="Accuracy vs F1 Score",
+        fig2.add_trace(go.Bar(
+            name="F1 (Weighted)",
+            x=models,
+            y=metrics_df["f1_weighted"].tolist(),
+            marker_color="#8BC34A",
+        ))
+        fig2.update_layout(
+            title="F1 Macro vs F1 Weighted",
             barmode="group",
             yaxis_title="Score",
             yaxis_tickformat=".0%",
+            yaxis_range=[0, 1.05],
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            height=400,
+            height=380,
+            xaxis_title="",
         )
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig2, width="stretch")
 
     with col2:
-        # Training time comparison
-        fig = px.bar(
-            metrics_df,
-            x="Model",
-            y="train_time",
-            color="train_time",
-            color_continuous_scale="Reds",
-            title="Training Time (seconds)",
-        )
-        fig.update_layout(
-            yaxis_title="Time (s)",
+        fig3 = go.Figure()
+        fig3.add_trace(go.Bar(
+            x=models,
+            y=metrics_df["train_time"].tolist(),
+            marker_color="#F44336",
             showlegend=False,
-            height=400,
+        ))
+        fig3.update_layout(
+            title="Training Time (seconds)",
+            yaxis_title="Time (s)",
+            height=380,
+            xaxis_title="",
         )
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig3, width="stretch")
 
-    # Detailed metrics table
+    # ── Detailed metrics table ───────────────────────────────────────────────
     st.markdown("#### Detailed Metrics")
 
     display_df = metrics_df[["Model", "accuracy", "f1_macro", "f1_weighted", "precision", "recall", "train_time"]].copy()
@@ -242,6 +274,176 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
             "Recall": "{:.2%}",
             "Train Time (s)": "{:.2f}",
         }).background_gradient(subset=["Accuracy", "F1 (Macro)"], cmap="Greens"),
+        width="stretch",
+        hide_index=True,
+    )
+
+
+def build_metrics_df_from_results(results: dict) -> pd.DataFrame:
+    """Build a metrics DataFrame from experiment_results.json when metrics_summary.csv is absent."""
+    model_results = get_model_results(results)
+    rows = []
+    for model_name, data in model_results.items():
+        if data.get("status") == "error" or "accuracy" not in data:
+            continue
+        rows.append({
+            "model":       model_name,
+            "accuracy":    data["accuracy"],
+            "f1_macro":    data["f1_macro"],
+            "f1_weighted": data["f1_weighted"],
+            "precision":   data["precision"],
+            "recall":      data["recall"],
+            "train_time":  data.get("train_time", 0),
+        })
+    return pd.DataFrame(rows) if rows else None
+
+
+def display_roc_curves(results: dict):
+    """Display ROC/AUC curves for all models."""
+    st.markdown("### 📈 ROC / AUC Curves")
+
+    model_results = get_model_results(results)
+
+    # Filter models that have roc_curves data
+    models_with_roc = {
+        name: data for name, data in model_results.items()
+        if data.get("roc_curves")
+    }
+
+    if not models_with_roc:
+        st.info("ROC curve data not available. Re-train your models to generate ROC data.")
+        return
+
+    classes = list(next(iter(models_with_roc.values()))["roc_curves"].keys())
+    is_binary = len(classes) == 1
+
+    # Color palette for classes (multiclass)
+    PALETTE = [
+        "#2196F3", "#4CAF50", "#FF5722", "#9C27B0",
+        "#FF9800", "#00BCD4", "#E91E63", "#8BC34A",
+    ]
+
+    if is_binary:
+        # Binary: one ROC curve per model, all on a single plot
+        fig = go.Figure()
+
+        for model_name, model_data in models_with_roc.items():
+            roc = model_data["roc_curves"]
+            cls = classes[0]
+            fpr = roc[cls]["fpr"]
+            tpr = roc[cls]["tpr"]
+            roc_auc = roc[cls]["auc"]
+            display_name = MODEL_DISPLAY_NAMES.get(model_name, model_name)
+            icon = MODEL_ICONS.get(model_name, "📦")
+
+            fig.add_trace(go.Scatter(
+                x=fpr,
+                y=tpr,
+                mode="lines",
+                name=f"{display_name} (AUC={roc_auc:.3f})",
+                line=dict(width=2),
+            ))
+
+        # Diagonal reference line
+        fig.add_trace(go.Scatter(
+            x=[0, 1], y=[0, 1],
+            mode="lines",
+            name="Random Classifier",
+            line=dict(color="gray", dash="dash", width=1),
+            showlegend=True,
+        ))
+
+        fig.update_layout(
+            title=f"ROC Curves — All Models (class: {cls})",
+            xaxis_title="False Positive Rate",
+            yaxis_title="True Positive Rate",
+            xaxis=dict(range=[0, 1]),
+            yaxis=dict(range=[0, 1.02]),
+            legend=dict(orientation="v", x=0.6, y=0.05),
+            height=500,
+        )
+        st.plotly_chart(fig, width="stretch")
+
+    else:
+        # Multiclass OvR: grid of subplots, one per model
+        num_models = len(models_with_roc)
+        ncols = min(2, num_models)
+        nrows = (num_models + ncols - 1) // ncols
+
+        fig = make_subplots(
+            rows=nrows,
+            cols=ncols,
+            subplot_titles=[
+                MODEL_DISPLAY_NAMES.get(m, m)
+                for m in models_with_roc
+            ],
+        )
+
+        for idx, (model_name, model_data) in enumerate(models_with_roc.items()):
+            row = idx // ncols + 1
+            col = idx % ncols + 1
+            roc = model_data["roc_curves"]
+
+            for cls_idx, cls in enumerate(classes):
+                if cls not in roc:
+                    continue
+                fpr = roc[cls]["fpr"]
+                tpr = roc[cls]["tpr"]
+                roc_auc = roc[cls]["auc"]
+                color = PALETTE[cls_idx % len(PALETTE)]
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=fpr,
+                        y=tpr,
+                        mode="lines",
+                        name=f"{cls} (AUC={roc_auc:.3f})",
+                        line=dict(color=color, width=2),
+                        legendgroup=cls,
+                        showlegend=(idx == 0),
+                    ),
+                    row=row,
+                    col=col,
+                )
+
+            # Diagonal
+            fig.add_trace(
+                go.Scatter(
+                    x=[0, 1], y=[0, 1],
+                    mode="lines",
+                    line=dict(color="gray", dash="dash", width=1),
+                    showlegend=False,
+                ),
+                row=row,
+                col=col,
+            )
+
+        fig.update_layout(
+            title="ROC Curves — One-vs-Rest (per model)",
+            height=350 * nrows,
+            legend=dict(orientation="v"),
+        )
+        fig.update_xaxes(title_text="FPR", range=[0, 1])
+        fig.update_yaxes(title_text="TPR", range=[0, 1.02])
+        st.plotly_chart(fig, width="stretch")
+
+    # AUC summary table
+    st.markdown("#### AUC Summary")
+    auc_rows = []
+    for model_name, model_data in models_with_roc.items():
+        roc = model_data["roc_curves"]
+        row = {"Model": MODEL_DISPLAY_NAMES.get(model_name, model_name)}
+        for cls, vals in roc.items():
+            row[f"AUC ({cls})"] = vals["auc"]
+        if len(classes) > 1:
+            row["Macro AUC"] = float(np.mean([v["auc"] for v in roc.values()]))
+        auc_rows.append(row)
+
+    auc_df = pd.DataFrame(auc_rows)
+    auc_cols = [c for c in auc_df.columns if c != "Model"]
+    st.dataframe(
+        auc_df.style.format({c: "{:.4f}" for c in auc_cols})
+        .background_gradient(subset=auc_cols, cmap="Greens"),
         width="stretch",
         hide_index=True,
     )
@@ -281,7 +483,7 @@ def display_confusion_matrices(results: dict):
                 text_auto=True,
             )
             fig.update_layout(
-                title=f"{icon} {display_name}",
+                title=display_name,
                 height=300,
                 margin=dict(l=10, r=10, t=40, b=10),
             )
@@ -377,6 +579,7 @@ def main():
         - [Overview](#overview)
         - [Configuration](#configuration)
         - [Performance](#model-performance-comparison)
+        - [ROC / AUC Curves](#roc-auc-curves)
         - [Confusion Matrices](#confusion-matrices)
         """)
 
@@ -457,13 +660,15 @@ def main():
 
     st.divider()
 
-    # Performance Section
-    if metrics is not None:
-        display_metrics_comparison(metrics)
+    # Performance Section — use CSV if available, fall back to results JSON
+    metrics_df = metrics if metrics is not None else build_metrics_df_from_results(results)
+
+    if metrics_df is not None:
+        display_metrics_comparison(metrics_df)
 
         # Best model highlight
-        best_idx = metrics["f1_macro"].idxmax()
-        best_model = metrics.loc[best_idx]
+        best_idx = metrics_df["f1_macro"].idxmax()
+        best_model = metrics_df.loc[best_idx]
 
         st.success(f"""
         🏆 **Best Model:** {MODEL_DISPLAY_NAMES.get(best_model['model'], best_model['model'])}
@@ -473,6 +678,12 @@ def main():
         """)
 
     st.divider()
+
+    # ROC/AUC Section
+    if results:
+        display_roc_curves(results)
+
+        st.divider()
 
     # Confusion Matrices Section
     if results:

@@ -33,6 +33,8 @@ from src.models.random_forest import RandomForestClassifier
 from src.models.knn import KNNClassifier
 from src.models.logistic_regression import LogisticRegressionClassifier
 from src.models.transformer import TransformerClassifier
+from src.models.xgboost_model import XGBoostClassifier
+from src.models.decision_tree import DecisionTreeClassifier
 from src.utils.hardware import get_hardware_summary, get_device_display_name
 
 # Page configuration
@@ -362,6 +364,136 @@ MODELS_INFO = {
             },
         },
     },
+    "xgboost": {
+        "name": "XGBoost",
+        "description": "Gradient boosting. High accuracy, handles sparse features well.",
+        "icon": "⚡",
+        "params": {
+            "n_estimators": {
+                "type": "int",
+                "default": 100,
+                "min": 10,
+                "max": 500,
+                "step": 10,
+                "help": "🎯 **Number of Boosting Rounds**\n\n"
+                        "• **What it does:** Number of trees to sequentially build\n"
+                        "• **Low (10-50):** Faster training, may underfit\n"
+                        "• **High (200-500):** Better accuracy, slower training\n"
+                        "• **Default (100):** Good starting point"
+            },
+            "max_depth": {
+                "type": "int",
+                "default": 6,
+                "min": 2,
+                "max": 15,
+                "step": 1,
+                "help": "🎯 **Maximum Tree Depth**\n\n"
+                        "• **What it does:** Controls complexity of each tree\n"
+                        "• **Low (2-4):** Simpler trees, less overfitting\n"
+                        "• **High (8-15):** More complex patterns, may overfit\n"
+                        "• **Default (6):** Standard choice for most tasks"
+            },
+            "learning_rate": {
+                "type": "float",
+                "default": 0.1,
+                "min": 0.01,
+                "max": 0.5,
+                "step": 0.01,
+                "help": "🎯 **Learning Rate (eta)**\n\n"
+                        "• **What it does:** Shrinks contribution of each tree\n"
+                        "• **Low (0.01-0.05):** More robust, needs more estimators\n"
+                        "• **High (0.2-0.5):** Faster learning, risk of overfitting\n"
+                        "• **Default (0.1):** Common starting point"
+            },
+            "subsample": {
+                "type": "float",
+                "default": 0.8,
+                "min": 0.3,
+                "max": 1.0,
+                "step": 0.1,
+                "help": "🎯 **Row Subsampling Ratio**\n\n"
+                        "• **What it does:** Fraction of samples used per tree\n"
+                        "• **0.5-0.7:** More regularization, prevents overfitting\n"
+                        "• **0.9-1.0:** Uses most data, may overfit\n"
+                        "• **Default (0.8):** Good balance"
+            },
+            "colsample_bytree": {
+                "type": "float",
+                "default": 0.8,
+                "min": 0.3,
+                "max": 1.0,
+                "step": 0.1,
+                "help": "🎯 **Feature Subsampling Ratio**\n\n"
+                        "• **What it does:** Fraction of features used per tree\n"
+                        "• **0.3-0.6:** Strong regularization, good for high-dimensional TF-IDF\n"
+                        "• **0.8-1.0:** Uses most features\n"
+                        "• **Default (0.8):** Good starting point"
+            },
+            "n_jobs": {
+                "type": "int",
+                "default": 4,
+                "min": 1,
+                "max": 16,
+                "step": 1,
+                "help": "🎯 **Parallel Jobs**\n\n"
+                        "• **What it does:** Number of CPU cores for training\n"
+                        "• **1:** Single core, deterministic\n"
+                        "• **4-8:** Good balance for most systems"
+            },
+        },
+    },
+    "decision_tree": {
+        "name": "Decision Tree",
+        "description": "Single decision tree. Fully interpretable, fast.",
+        "icon": "🌿",
+        "params": {
+            "max_depth": {
+                "type": "int",
+                "default": 20,
+                "min": 2,
+                "max": 50,
+                "step": 1,
+                "help": "🎯 **Maximum Tree Depth**\n\n"
+                        "• **What it does:** Maximum levels in the decision tree\n"
+                        "• **Low (2-5):** Very simple, interpretable, may underfit\n"
+                        "• **High (20-50):** Complex, tends to overfit without pruning\n"
+                        "• **Default (20):** Balanced depth for text features"
+            },
+            "min_samples_split": {
+                "type": "int",
+                "default": 2,
+                "min": 2,
+                "max": 50,
+                "step": 1,
+                "help": "🎯 **Minimum Samples to Split**\n\n"
+                        "• **What it does:** Minimum samples required to split a node\n"
+                        "• **Low (2):** Allows very fine splits, risk of overfitting\n"
+                        "• **High (20-50):** Only splits on larger groups, more robust\n"
+                        "• **Default (2):** Standard sklearn default"
+            },
+            "min_samples_leaf": {
+                "type": "int",
+                "default": 1,
+                "min": 1,
+                "max": 20,
+                "step": 1,
+                "help": "🎯 **Minimum Samples per Leaf**\n\n"
+                        "• **What it does:** Minimum samples required at each leaf node\n"
+                        "• **1:** Allow single-sample leaves (may memorize)\n"
+                        "• **5-20:** Forces broader generalizations\n"
+                        "• **Default (1):** Standard sklearn default"
+            },
+            "criterion": {
+                "type": "select",
+                "default": "gini",
+                "options": ["gini", "entropy", "log_loss"],
+                "help": "🎯 **Split Quality Criterion**\n\n"
+                        "• **gini:** Gini impurity. Faster to compute. Recommended.\n"
+                        "• **entropy:** Information gain. Slightly slower, similar results.\n"
+                        "• **log_loss:** Minimizes log-loss. Good for probability calibration."
+            },
+        },
+    },
 }
 
 # Preprocessing options with detailed tooltips
@@ -544,6 +676,24 @@ def create_model(model_name: str, params: dict, device: str = None):
             solver=params.get("solver", "lbfgs"),
             random_state=42,
         )
+    elif model_name == "xgboost":
+        return XGBoostClassifier(
+            n_estimators=params.get("n_estimators", 100),
+            max_depth=params.get("max_depth", 6),
+            learning_rate=params.get("learning_rate", 0.1),
+            subsample=params.get("subsample", 0.8),
+            colsample_bytree=params.get("colsample_bytree", 0.8),
+            n_jobs=params.get("n_jobs", 4),
+            random_state=42,
+        )
+    elif model_name == "decision_tree":
+        return DecisionTreeClassifier(
+            max_depth=params.get("max_depth", 20),
+            min_samples_split=params.get("min_samples_split", 2),
+            min_samples_leaf=params.get("min_samples_leaf", 1),
+            criterion=params.get("criterion", "gini"),
+            random_state=42,
+        )
     elif model_name == "transformer":
         return TransformerClassifier(
             model_name=params.get("model_name", "distilbert-base-uncased"),
@@ -596,6 +746,9 @@ def train_models(
     train_df = pd.read_csv(dataset["train_path"])
     test_df = pd.read_csv(dataset["test_path"])
 
+    # Detect all classes from full data before sampling to avoid missing rare classes
+    all_classes = sorted(train_df["label"].unique().tolist())
+
     # Sample if specified
     if sample_size and sample_size < len(train_df):
         train_df = train_df.sample(n=sample_size, random_state=42)
@@ -604,7 +757,7 @@ def train_models(
 
     results["train_size"] = len(train_df)
     results["test_size"] = len(test_df)
-    results["classes"] = train_df["label"].unique().tolist()
+    results["classes"] = all_classes
 
     X_train_text = train_df["text"].tolist()
     y_train = train_df["label"].values
@@ -720,6 +873,7 @@ def train_models(
                 "train_time": train_time,
                 "eval_time": eval_time,
                 "confusion_matrix": eval_results["confusion_matrix"].tolist(),
+                "roc_curves": eval_results.get("roc_curves", {}),
                 "params": params,
                 "status": "success",
             }
@@ -747,7 +901,7 @@ def train_models(
 
     # Build models config with enabled flag
     models_config = {}
-    all_model_names = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression", "transformer"]
+    all_model_names = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression", "xgboost", "decision_tree", "transformer"]
     for model_name in all_model_names:
         if model_name in selected_models:
             model_cfg = {"enabled": True}
