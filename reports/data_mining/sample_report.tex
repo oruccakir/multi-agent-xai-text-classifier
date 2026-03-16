@@ -1,0 +1,293 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{cite}
+
+% Code Listing Style
+\lstset{
+	language=Python,
+	basicstyle=\ttfamily\footnotesize,
+	keywordstyle=\color{blue}\bfseries,
+	commentstyle=\color{gray}\itshape,
+	stringstyle=\color{red},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	numbersep=5pt,
+	frame=single,
+	breaklines=true,
+	captionpos=b,
+	tabsize=4
+}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+		T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+	
+	\title{[Your Project Title Here]\\
+		{\footnotesize BIL 476 / 573 --- Data Mining Course Project, Spring 2026\\
+			TOBB University of Economics and Technology}
+	}
+	
+	\author{\IEEEauthorblockN{[Student Full Name]}
+		\IEEEauthorblockA{\textit{TOBB University of Economics and Technology}\\
+			Ankara, Turkey \\
+			Student ID: [XXXXXXXXX] \\
+			student@etu.edu.tr}
+	}
+	
+	\maketitle
+	
+	\begin{abstract}
+		Provide a concise summary of your project (150--250 words). State the problem you addressed, the data mining technique(s) used, the dataset, key results, and main conclusions. Do not use symbols, special characters, footnotes, or math in the abstract.
+	\end{abstract}
+	
+	\begin{IEEEkeywords}
+		data mining, [keyword 2], [keyword 3], [keyword 4], [keyword 5]
+	\end{IEEEkeywords}
+	
+	\section{Introduction}
+	\label{sec:introduction}
+	
+	Describe the problem you are addressing. Why is it important? What is the real-world motivation? Clearly state your research question or objective.
+	
+	\textbf{Guidelines:}
+	\begin{itemize}
+		\item Define the problem clearly and concisely.
+		\item Explain why this problem is relevant and important.
+		\item State your specific research question or objective.
+		\item Briefly mention the approach you took.
+		\item Outline the structure of the rest of the paper.
+	\end{itemize}
+	
+	\textit{Example: ``In this project, we investigate whether frequent pattern mining can reveal meaningful purchasing behaviors in online retail data. We compare the effectiveness of Apriori and FP-Growth algorithms under different support thresholds and evaluate the discovered rules using multiple interestingness measures.''}
+	
+	\section{Related Work}
+	\label{sec:related_work}
+	
+	Provide a literature review of relevant prior work.
+	
+	\textbf{Requirements:}
+	\begin{itemize}
+		\item \textbf{BIL 476 (Undergraduate):} Cite at least 3--5 references.
+		\item \textbf{BIL 573 (Graduate):} Cite at least 5--8 references.
+	\end{itemize}
+	
+	Discuss how your work relates to or differs from existing studies. For example: ``Han et al.~\cite{b1} introduced the FP-Growth algorithm as an efficient alternative to Apriori. Smith and Jones~\cite{b2} applied K-Means clustering to customer segmentation but did not consider the effect of dimensionality reduction, which we address in this work.''
+	
+	\section{Dataset Description}
+	\label{sec:dataset}
+	
+	\subsection{Data Source}
+	Describe where the data comes from (e.g., Kaggle, UCI Machine Learning Repository, data.gov, web scraping, synthetic generation). Include the URL or reference. Explain why this dataset is appropriate for your chosen problem.
+	
+	\subsection{Data Characteristics}
+	Provide a summary of the dataset using the table format below:
+	
+	\begin{table}[htbp]
+		\caption{Dataset Summary}
+		\begin{center}
+			\begin{tabular}{|l|l|}
+				\hline
+				\textbf{Property} & \textbf{Value} \\
+				\hline
+				Number of Records & e.g., 10,000 \\
+				\hline
+				Number of Attributes & e.g., 15 \\
+				\hline
+				Attribute Types & Nominal, Ordinal, Numeric \\
+				\hline
+				Target Variable & e.g., Class (Yes/No) \\
+				\hline
+				Missing Values & e.g., 5\% in column X \\
+				\hline
+				Class Distribution & e.g., 70\% / 30\% \\
+				\hline
+				Source URL & e.g., kaggle.com/datasets/... \\
+				\hline
+			\end{tabular}
+			\label{tab:dataset}
+		\end{center}
+	\end{table}
+	
+	Include descriptive statistics (mean, median, standard deviation, min, max) for key numeric attributes. Show sample rows if helpful.
+	
+	\subsection{Ethical Considerations}
+	Discuss any privacy, bias, or ethical concerns related to the data. How did you address them?
+	
+	\section{Methodology}
+	\label{sec:methodology}
+	
+	\subsection{Data Preprocessing}
+	Describe the preprocessing steps applied and justify each choice:
+	\begin{itemize}
+		\item \textbf{Missing value handling:} Method used (e.g., mean/median imputation, deletion, model-based) and why.
+		\item \textbf{Noise removal:} Smoothing, outlier treatment.
+		\item \textbf{Normalization / Standardization:} e.g., min-max scaling, z-score normalization.
+		\item \textbf{Feature selection / Dimensionality reduction:} e.g., PCA, correlation-based selection.
+		\item \textbf{Data transformation:} e.g., discretization, encoding categorical variables.
+	\end{itemize}
+	
+	Discuss the \textbf{effect of different preprocessing choices} on your results where applicable.
+	
+	\subsection{Algorithm Selection and Description}
+	Describe the algorithm(s) you chose and \textbf{justify why} they are appropriate for your problem. Provide a brief theoretical background for each algorithm.
+	
+	You must apply \textbf{at least two different approaches or variations} and compare them. For example:
+	\begin{itemize}
+		\item Different algorithms for the same task (e.g., K-Means vs. DBSCAN)
+		\item Same algorithm with different parameters or data transformations
+		\item Standard method vs. a hybrid/novel approach (especially for BIL 573 students)
+	\end{itemize}
+	
+	\textbf{BIL 573 (Graduate) students} are expected to go beyond standard methods and explore hybrid, modified, or novel approaches.
+	
+	\subsection{Experimental Setup}
+	\begin{itemize}
+		\item Train/test split ratio (e.g., 80/20) or cross-validation strategy (e.g., 10-fold)
+		\item Hyperparameter settings and how they were chosen
+		\item Hardware and software environment
+		\item Programming language and libraries used (e.g., Python 3.x, scikit-learn, mlxtend, pandas, matplotlib)
+	\end{itemize}
+	
+	\section{Results}
+	\label{sec:results}
+	
+	\subsection{Evaluation Metrics}
+	Describe the metrics used and justify their appropriateness for your task. Examples by task type:
+	\begin{itemize}
+		\item \textbf{Classification:} Accuracy, Precision, Recall, F1-Score, ROC/AUC
+		\item \textbf{Clustering:} Silhouette Score, SSE, Davies-Bouldin Index
+		\item \textbf{Pattern Mining:} Support, Confidence, Lift, Kulczynski
+		\item \textbf{Anomaly Detection:} Precision, Recall, F1, False Positive Rate
+		\item \textbf{Regression/Prediction:} RMSE, MAE, $R^2$
+	\end{itemize}
+	
+	\subsection{Results Summary}
+	Present your results with appropriate tables and figures.
+	
+	\begin{table}[htbp]
+		\caption{Classification Results Comparison (Example)}
+		\begin{center}
+			\begin{tabular}{|l|c|c|c|c|}
+				\hline
+				\textbf{Model} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} \\
+				\hline
+				Decision Tree & 0.85 & 0.83 & 0.80 & 0.81 \\
+				\hline
+				Na\"ive Bayes & 0.82 & 0.79 & 0.84 & 0.81 \\
+				\hline
+				Random Forest & 0.89 & 0.87 & 0.86 & 0.86 \\
+				\hline
+			\end{tabular}
+			\label{tab:results}
+		\end{center}
+	\end{table}
+	
+	\subsection{Visualizations}
+	Include relevant figures such as:
+	\begin{itemize}
+		\item Confusion matrices, ROC curves (classification)
+		\item Cluster scatter plots, dendrograms (clustering)
+		\item Frequent itemset/rule visualizations (pattern mining)
+		\item Time series plots (prediction)
+		\item Boxplots, histograms, heatmaps (EDA)
+	\end{itemize}
+	
+	Use the abbreviation ``Fig.~\ref{fig:example}'' when referencing figures, even at the beginning of a sentence.
+	
+	\begin{figure}[htbp]
+		\centerline{\rule{0.35\textwidth}{3cm}}
+		\caption{Replace with your actual figure. Use 8pt Times New Roman for axis labels. Write full quantity names (e.g., ``Accuracy (\%)''), not just symbols.}
+		\label{fig:example}
+	\end{figure}
+	
+	\subsection{Comparison of Approaches}
+	Compare the different methods/variations you tried. Discuss:
+	\begin{itemize}
+		\item Which performed best and \textbf{why}?
+		\item How did different data transformations or preprocessing choices affect results?
+		\item Statistical significance of differences (if applicable).
+	\end{itemize}
+	
+	\section{Discussion}
+	\label{sec:discussion}
+	
+	Provide a critical analysis of your work:
+	\begin{itemize}
+		\item Which method performed best and \textbf{why}?
+		\item What were the \textbf{limitations} of your approach?
+		\item Were there any \textbf{surprising or unexpected findings}?
+		\item How did data quality issues (missing values, noise, imbalance) affect results?
+		\item Discuss any \textbf{ethical implications} (bias, fairness, privacy).
+		\item \textbf{BIL 573 students:} Discuss the novelty of your approach and its potential for academic publication.
+	\end{itemize}
+	
+	\section{Conclusion and Future Work}
+	\label{sec:conclusion}
+	
+	Summarize your key findings concisely. Address:
+	\begin{itemize}
+		\item What did you achieve?
+		\item What are the main takeaways?
+		\item What would you do differently if you had more time?
+		\item Suggest concrete directions for future work.
+	\end{itemize}
+	
+	\begin{thebibliography}{00}
+		
+		\bibitem{b1} J.~Han, M.~Kamber, and J.~Pei, \textit{Data Mining: Concepts and Techniques}, 3rd~ed. Morgan Kaufmann, 2011.
+		
+		\bibitem{b2} A.~Smith and B.~Jones, ``Customer segmentation using K-Means clustering,'' in \textit{Proc. IEEE Int. Conf. Data Mining}, 2023, pp.~100--110.
+		
+	\end{thebibliography}
+	
+	\newpage	
+	\appendix
+	
+	\section{Code Repository}
+	\label{app:code}
+	
+	Full source code is available at: \url{https://github.com/yourusername/project-repo}
+	
+	\begin{lstlisting}[caption={Example: Data Loading and Preprocessing}, label={lst:preprocess}]
+		import pandas as pd
+		import numpy as np
+		from sklearn.model_selection import train_test_split
+		from sklearn.preprocessing import StandardScaler
+		
+		# Load dataset
+		df = pd.read_csv('data/dataset.csv')
+		print(f"Dataset shape: {df.shape}")
+		print(f"Missing values:\n{df.isnull().sum()}")
+		
+		# Handle missing values
+		df.fillna(df.median(numeric_only=True), inplace=True)
+		
+		# Split data
+		X = df.drop('target', axis=1)
+		y = df['target']
+		X_train, X_test, y_train, y_test = train_test_split(
+		X, y, test_size=0.2, random_state=42,
+		stratify=y
+		)
+		
+		# Normalize
+		scaler = StandardScaler()
+		X_train = scaler.fit_transform(X_train)
+		X_test = scaler.transform(X_test)
+	\end{lstlisting}
+	
+	\section{Additional Figures and Tables}
+	\label{app:additional}
+	
+	Include any supplementary material here (additional plots, extended result tables, hyperparameter tuning details, etc.).
+	
+\end{document}
