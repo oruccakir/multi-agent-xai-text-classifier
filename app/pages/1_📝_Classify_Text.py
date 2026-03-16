@@ -146,6 +146,8 @@ def get_best_model_for_dataset(exp_path: Path, dataset: str, available_models: l
                 default=None,
             )
             if best_model:
+                st.info(f"Selected model: {best_model}")
+                print(f"Selected model: {best_model}")
                 return best_model
         except Exception:
             pass
@@ -512,11 +514,8 @@ def main():
                 st.error(f"No trained models found for dataset '{detected_dataset}'.")
                 return
 
-            # Use logistic_regression as default, or first available
-            if "logistic_regression" in available_models:
-                selected_model = "logistic_regression"
-            else:
-                selected_model = available_models[0]
+            # Select best performing model from experiment results
+            selected_model = get_best_model_for_dataset(selected_exp["path"], detected_dataset, available_models)
 
             # ==========================================
             # AGENT 2: Classification
