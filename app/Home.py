@@ -19,30 +19,34 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for better styling
+# Custom CSS for better styling (dark theme compatible)
 st.markdown("""
 <style>
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
-        color: #1E88E5;
+        background: linear-gradient(135deg, #60a5fa, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         text-align: center;
         margin-bottom: 0.5rem;
     }
     .sub-header {
         font-size: 1.2rem;
-        color: #666;
+        color: #94a3b8;
         text-align: center;
         margin-bottom: 2rem;
     }
     .agent-box {
-        background-color: #f0f2f6;
+        background-color: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(100, 116, 139, 0.3);
         border-radius: 10px;
         padding: 1rem;
         margin: 0.5rem 0;
     }
     .prediction-box {
-        background-color: #e8f5e9;
+        background-color: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
         border-radius: 10px;
         padding: 1.5rem;
         text-align: center;
@@ -51,24 +55,83 @@ st.markdown("""
     .prediction-label {
         font-size: 2rem;
         font-weight: bold;
-        color: #2e7d32;
+        color: #34d399;
     }
     .confidence-label {
         font-size: 1.5rem;
-        color: #666;
+        color: #94a3b8;
     }
     .explanation-box {
-        background-color: #fff3e0;
+        background-color: rgba(245, 158, 11, 0.1);
         border-radius: 10px;
         padding: 1rem;
         margin: 1rem 0;
-        border-left: 4px solid #ff9800;
+        border-left: 4px solid #f59e0b;
     }
     .stTabs [data-baseweb="tab-list"] {
         gap: 2rem;
     }
     .stTabs [data-baseweb="tab"] {
         padding: 1rem 2rem;
+    }
+    /* Feature card styling */
+    .feature-card {
+        border-radius: 12px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+    .feature-card h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+    }
+    .feature-card p {
+        margin: 0;
+        font-size: 0.9rem;
+        opacity: 0.85;
+    }
+    .card-blue {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.25));
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        color: #93c5fd;
+    }
+    .card-blue h4 { color: #93c5fd; }
+    .card-blue p { color: #bfdbfe; }
+    .card-purple {
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(139, 92, 246, 0.25));
+        border: 1px solid rgba(168, 85, 247, 0.35);
+        color: #c4b5fd;
+    }
+    .card-purple h4 { color: #c4b5fd; }
+    .card-purple p { color: #ddd6fe; }
+    .card-green {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.25));
+        border: 1px solid rgba(16, 185, 129, 0.35);
+        color: #6ee7b7;
+    }
+    .card-green h4 { color: #6ee7b7; }
+    .card-green p { color: #a7f3d0; }
+    .card-amber {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.25));
+        border: 1px solid rgba(245, 158, 11, 0.35);
+        color: #fcd34d;
+    }
+    .card-amber h4 { color: #fcd34d; }
+    .card-amber p { color: #fde68a; }
+    /* Footer styling */
+    .footer-text {
+        text-align: center;
+        color: #64748b;
+        font-size: 0.9rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -107,7 +170,7 @@ def main():
 
     with col1:
         st.markdown("""
-        <div style="background-color: #e3f2fd; padding: 1rem; border-radius: 10px; text-align: center;">
+        <div class="feature-card card-blue">
             <h4>📝 Single Text</h4>
             <p>Classify one text with full explanation</p>
         </div>
@@ -115,7 +178,7 @@ def main():
 
     with col2:
         st.markdown("""
-        <div style="background-color: #f3e5f5; padding: 1rem; border-radius: 10px; text-align: center;">
+        <div class="feature-card card-purple">
             <h4>📊 Batch Processing</h4>
             <p>Process multiple texts from CSV</p>
         </div>
@@ -123,7 +186,7 @@ def main():
 
     with col3:
         st.markdown("""
-        <div style="background-color: #e8f5e9; padding: 1rem; border-radius: 10px; text-align: center;">
+        <div class="feature-card card-green">
             <h4>⚖️ Model Comparison</h4>
             <p>Compare all 6 models</p>
         </div>
@@ -131,7 +194,7 @@ def main():
 
     with col4:
         st.markdown("""
-        <div style="background-color: #fff3e0; padding: 1rem; border-radius: 10px; text-align: center;">
+        <div class="feature-card card-amber">
             <h4>📚 Dataset Explorer</h4>
             <p>Explore the datasets</p>
         </div>
@@ -193,7 +256,7 @@ def main():
     # Footer
     st.divider()
     st.markdown("""
-    <div style="text-align: center; color: #888; font-size: 0.9rem;">
+    <div class="footer-text">
         <p>Built by Oruç Çakır | TOBB ETÜ - BİL 443/564 | Spring 2025-26</p>
     </div>
     """, unsafe_allow_html=True)
