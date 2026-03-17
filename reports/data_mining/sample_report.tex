@@ -487,9 +487,17 @@ make the code cleaner. For transformer models, I used the HuggingFace \texttt{tr
 library (v4.38) with \texttt{PyTorch} (v2.2). I fine-tuned the transformers using
 \texttt{AdamW} with a linear learning rate schedule and 10\% of steps for warmup.
 
-I used the original train/test splits from each dataset so that my results can be compared
-to other papers. I did not create a separate validation set. The random seed was set to 42
-in all experiments so that the results are reproducible.
+\textbf{Train/test splits.} All four datasets come with predefined train and test splits
+from their original sources; I used these splits as-is so that results are directly
+comparable to other published work. No additional validation set was created. For
+IMDB and Turkish News, the full training set was used (25,000 and 3,920 samples
+respectively). For AG News and Turkish Sentiment, the training sets are much larger
+(120,000 and 440,679 samples) and some models (KNN, XGBoost, Decision Tree) do not
+scale to that size in reasonable time, so I subsampled 50,000 training examples for
+both. For Turkish Sentiment, the subsampling was stratified to preserve the original
+class ratios (53.5\% pozitif, 34.9\% notr, 11.6\% negatif). The test sets were always
+used in full without subsampling (7,600 samples for AG News, 48,965 for Turkish
+Sentiment). The random seed was set to 42 in all experiments for reproducibility.
 
 Hardware: Intel Core i7-13620H (10 cores, 16 threads), 32\,GB RAM,
 NVIDIA GeForce RTX~4060 Laptop GPU (8\,GB VRAM). Transformer training was done on the GPU;
