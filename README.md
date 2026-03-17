@@ -196,4 +196,6 @@ The app includes six pages:
 
 ## Report
 
-The full IEEE-format paper is at [`reports/pattern_recognition/sample_report.tex`](reports/pattern_recognition/sample_report.tex).
+The full IEEE-format paper is at [`reports/pattern_recognition/211101023_OrucCakir_BIL443_report.tex`](reports/pattern_recognition/211101023_OrucCakir_BIL443_report.tex).
+
+PDF: [`reports/pattern_recognition/211101023_OrucCakir_BIL443_report.pdf`](reports/pattern_recognition/211101023_OrucCakir_BIL443_report.pdf).
