@@ -70,9 +70,8 @@ models, including classical data mining classifiers (Naive Bayes, SVM, Random Fo
 Logistic Regression, Decision Tree, XGBoost) and a deep learning model (DistilBERT/BERTurk),
 on four datasets: IMDB, AG News, Turkish Sentiment, and Turkish News. The results show that
 transformer models generally get the best accuracy, but simpler classical models like SVM
-and Logistic Regression are also competitive and much faster to train. SHAP and LIME
-explanations reveal that classical models are easier to interpret, while transformer
-explanations are less consistent. Class imbalance in Turkish Sentiment and the complex
+and Logistic Regression are also competitive and much faster to train. SHAP and LIME explanations provide word-level attribution for all models, showing which
+tokens most influence each prediction. Class imbalance in Turkish Sentiment and the complex
 structure of Turkish words make both types of models harder to use on Turkish data.
 \end{abstract}
 
@@ -116,7 +115,7 @@ SHAP and LIME?''}
 \end{quote}
 
 To answer this question, I built a three-agent system. The multi-agent design is not the
-goal itself --- it is the method I use to systematically compare eight different models
+goal itself; it is the method I use to systematically compare eight different models
 across four datasets in a modular and reproducible way. One agent routes the input to the
 right model, one runs the classification, and one generates the explanation. I also included
 two Turkish datasets to test whether the findings generalize beyond English, since most
@@ -209,14 +208,17 @@ has a clear responsibility and can be updated independently.
 \subsection{Data Sources}
 
 In this project, I used four publicly available datasets. Two of them are in English and
-two are in Turkish. The IMDB dataset~\cite{b8} was created by Maas et al.\ and contains
+two are in Turkish. The IMDB dataset~\cite{b_imdb} (\texttt{stanfordnlp/imdb}) contains
 50,000 movie reviews labeled as positive or negative. It is a widely used benchmark for
-binary sentiment classification. The AG News dataset~\cite{b9} was used by Zhang et al.\ to
-evaluate character-level neural networks. It contains news article titles and descriptions
-from four categories: World, Business, Sports, and Sci/Tech. The Turkish Sentiment dataset
-is available on HuggingFace and contains product and social media reviews with three labels:
-positive, neutral, and negative. Finally, the Turkish News dataset contains full news
-articles from Turkish news websites, labeled with seven different topic categories.
+binary sentiment classification, originally introduced by Maas et al.~\cite{b8}.
+The AG News dataset~\cite{b_agnews} (\texttt{sh0416/ag\_news}) contains news article
+titles and descriptions from four categories: World, Business, Sports, and Sci/Tech,
+originally benchmarked by Zhang et al.~\cite{b9}. The Turkish Sentiment dataset~\cite{b_trsentiment}
+is available on HuggingFace (\texttt{winvoker/turkish-sentiment-analysis-dataset}) and
+contains product and social media reviews with three labels: positive, neutral, and negative.
+Finally, the Turkish News dataset~\cite{b_trnews} (\texttt{savasy/ttc4900}, also known as
+TTC4900) contains full news articles from Turkish news websites, labeled with seven different
+topic categories.
 
 \subsection{Data Characteristics}
 
@@ -243,40 +245,65 @@ which makes comparing models across them an interesting challenge.
 			\# Classes    & 2         & 4         & 3         & 7 \\
 			Avg.\ len.\ (chars) & 1,325 & 236     & 140       & 1,981 \\
 			Balance       & Balanced  & Balanced  & Imbalanced & Balanced \\
-			Source        & \cite{b8} & \cite{b9} & HuggingFace & GitHub \\
+			Source        & \cite{b_imdb} & \cite{b_agnews} & \cite{b_trsentiment} & \cite{b_trnews} \\
 			\bottomrule
 		\end{tabular}
 	\end{center}
 \end{table}
 
-The class labels for each dataset are: IMDB --- \textit{positive}, \textit{negative};
-AG News --- \textit{World}, \textit{Business}, \textit{Sports}, \textit{Sci/Tech};
-Turkish Sentiment --- \textit{pozitif}, \textit{notr}, \textit{negatif};
-Turkish News --- \textit{siyaset}, \textit{saglik}, \textit{teknoloji}, \textit{kultur},
+The class labels for each dataset are: IMDB: \textit{positive}, \textit{negative};
+AG News: \textit{World}, \textit{Business}, \textit{Sports}, \textit{Sci/Tech};
+Turkish Sentiment: \textit{pozitif}, \textit{notr}, \textit{negatif};
+Turkish News: \textit{siyaset}, \textit{saglik}, \textit{teknoloji}, \textit{kultur},
 \textit{spor}, \textit{ekonomi}, \textit{dunya}.
 
-Table~\ref{tab:class_dist} shows the class distribution of the Turkish Sentiment dataset.
-This dataset is quite imbalanced: the negative class has only 11.5\% of the training
-samples. This can cause classifiers to mostly ignore the negative class because it is so
-rare, which is why I use macro F1 as the main metric for this dataset.
+Table~\ref{tab:class_dist} shows the per-class distribution for all four datasets (training
+splits). IMDB and AG News are perfectly balanced across their classes. Turkish Sentiment is
+notably imbalanced: the \textit{negatif} class constitutes only 11.6\% of training samples,
+which can lead classifiers to under-predict the minority class, motivating the use of
+macro F1 as the primary metric for that dataset. Turkish News is artificially balanced
+(560 samples per class) due to dataset construction, but its small size makes it the most
+challenging task overall.
 
 \begin{table}[htbp]
-	\caption{Class Distribution --- Turkish Sentiment (Training Set)}
+	\caption{Class Distribution per Dataset (Training Set)}
 	\label{tab:class_dist}
 	\begin{center}
 		\footnotesize
 		\renewcommand{\arraystretch}{1.2}
-		\setlength{\tabcolsep}{8pt}
-		\begin{tabular}{lrr}
+		\setlength{\tabcolsep}{6pt}
+		\begin{tabular}{llrr}
 			\toprule
 			\rowcolor{headerblue}
-			\color{white}\textbf{Class} & \color{white}\textbf{Count} & \color{white}\textbf{\%} \\
+			\color{white}\textbf{Dataset} & \color{white}\textbf{Class} & \color{white}\textbf{Count} & \color{white}\textbf{\%} \\
 			\midrule
-			pozitif         & 235,949 & 53.5\% \\
-			notr            & 153,825 & 34.9\% \\
-			negatif         &  50,905 & 11.5\% \\
+			\multirow{3}{*}{IMDB}
+			  & negative  & 12,500 & 50.0\% \\
+			  & positive  & 12,500 & 50.0\% \\
+			  & \textit{Total} & \textit{25,000} & \\
 			\midrule
-			\textbf{Total}  & \textbf{440,679} & \textbf{100\%} \\
+			\multirow{5}{*}{AG News}
+			  & Business  & 30,000 & 25.0\% \\
+			  & Sci/Tech  & 30,000 & 25.0\% \\
+			  & Sports    & 30,000 & 25.0\% \\
+			  & World     & 30,000 & 25.0\% \\
+			  & \textit{Total} & \textit{120,000} & \\
+			\midrule
+			\multirow{4}{*}{Turkish Sentiment}
+			  & pozitif   & 235,949 & 53.5\% \\
+			  & notr      & 153,825 & 34.9\% \\
+			  & negatif   &  50,905 & 11.6\% \\
+			  & \textit{Total} & \textit{440,679} & \\
+			\midrule
+			\multirow{8}{*}{Turkish News}
+			  & dunya     & 560 & 14.3\% \\
+			  & ekonomi   & 560 & 14.3\% \\
+			  & kultur    & 560 & 14.3\% \\
+			  & saglik    & 560 & 14.3\% \\
+			  & siyaset   & 560 & 14.3\% \\
+			  & spor      & 560 & 14.3\% \\
+			  & teknoloji & 560 & 14.3\% \\
+			  & \textit{Total} & \textit{3,920} & \\
 			\bottomrule
 		\end{tabular}
 	\end{center}
@@ -335,30 +362,36 @@ statistically, and the transformer models use subword tokenization anyway.
 \end{table}
 
 \textbf{Transformer tokenization.} For the IMDB and AG News datasets, I used the
-\texttt{distilbert-base-uncased} tokenizer with a maximum length of 256 tokens. For the
-Turkish datasets, I used the \texttt{dbmdz/bert-base-turkish-cased} (BERTurk) tokenizer
-with a maximum length of 128 tokens. I chose 128 for Turkish because the average text
-length is shorter there, and it also helps with memory usage during training.
+\texttt{distilbert-base-uncased} tokenizer. The maximum sequence length differs by dataset:
+256 tokens for IMDB (reviews average $\sim$330 tokens; 256 captures most of the signal)
+and 128 tokens for AG News (short news snippets average $\sim$60 tokens, so 128 is ample).
+For the Turkish datasets, I used the \texttt{dbmdz/bert-base-turkish-cased} (BERTurk)
+tokenizer. Turkish Sentiment texts are short ($\sim$35 tokens on average), so a maximum
+length of 128 tokens is sufficient. Turkish News texts are much longer ($\sim$500 tokens on
+average), so I used the full 512-token limit to avoid truncating articles.
 
 \subsection{Multi-Agent Architecture}
 \label{subsec:architecture}
 
 My system has three agents that work together, as shown in Fig.~\ref{fig:architecture}.
 
-\textbf{Agent 1 --- Intent Classifier Agent.} This agent takes the raw user input and tries
-to figure out which dataset it belongs to. For example, if someone types a movie review, the
-agent should route it to the IMDB model. It does this using a small classifier trained on
-example queries. The output is a dataset label and a recommended model name.
+\textbf{Agent 1: Intent Classifier Agent.} This agent takes the raw user input and
+determines which of the four trained dataset models should handle it. It does this by
+prompting a large language model (LLM) with the input text; the LLM detects the language
+(English or Turkish) and the domain (sentiment or news), and returns the appropriate dataset
+identifier. For example, an English movie review is routed to the IMDB models, while a
+Turkish news article is routed to the Turkish News models. No new model is trained for this
+step; the routing decision is made entirely by the LLM at inference time.
 
-\textbf{Agent 2 --- Classification Agent.} This agent takes the dataset label and model name
+\textbf{Agent 2: Classification Agent.} This agent takes the dataset label and model name
 from Agent~1, loads the correct model, and runs the classification. It returns the predicted
 label and confidence scores for all classes.
 
-\textbf{Agent 3 --- XAI Agent.} This agent takes the original text and the prediction from
+\textbf{Agent 3: XAI Agent.} This agent takes the original text and the prediction from
 Agent~2 and generates an explanation. I use the generic \texttt{shap.Explainer} interface
 from the SHAP library, which internally selects the appropriate algorithm based on the
 model and masker. The text masker uses a regex tokenizer (\texttt{\textbackslash W+}) to
-split inputs into words. The same interface works for all eight model types --- the only
+split inputs into words. The same interface works for all eight model types; the only
 difference is the \texttt{predict\_proba} function passed to the explainer: for classical
 models it goes through TF-IDF vectorization first, while for the transformer it calls the
 model directly. In addition to SHAP, I run \texttt{LimeTextExplainer} from the LIME library
@@ -482,6 +515,82 @@ and a regex tokenizer, which is the same setup for all eight models. The only di
 between models is again the \texttt{predict\_proba} wrapper passed to the explainer.
 
 % ============================================================
+\subsection{End-to-End Pipeline Demonstration}
+\label{sec:demo}
+% ============================================================
+
+To illustrate the complete 3-agent pipeline in action, I present a worked example using the
+English movie review \textit{``This movie was absolutely fantastic! The acting was superb and
+the plot kept me engaged throughout.''}
+
+\textbf{Step 1 — User Input (Fig.~\ref{fig:demo_classify}).} The web interface accepts raw text
+and displays the current experiment and XAI configuration. Quick-example buttons for each of the
+four datasets are provided for rapid testing.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{examples/classify.png}
+  \caption{Single Text Classification interface. The user enters a movie review; the experiment
+  and XAI methods are shown in the sidebar.}
+  \label{fig:demo_classify}
+\end{figure}
+
+\textbf{Step 2 — Agent 1: Intent Detection (Fig.~\ref{fig:demo_agent1}).} The Intent Classifier
+agent, powered by an LLM, analyses the input and outputs: language = \textsc{English},
+domain = \textit{Sentiment}, dataset = \texttt{imdb}, confidence = 95\%.
+It also logs its reasoning and shows the preprocessed text (stop-words removed) that will be
+passed to the classification pipeline.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{examples/agent1.png}
+  \caption{Agent 1 — Intent Detection output. The LLM correctly identifies English sentiment
+  analysis and routes the request to the IMDB dataset.}
+  \label{fig:demo_agent1}
+\end{figure}
+
+\textbf{Step 3 — Agent 2: Classification (Fig.~\ref{fig:demo_agent2}).} The Classification agent
+loads the model selected for this run (SVM in this example) and predicts \textsc{Positive} with
+91.4\% confidence. A horizontal bar chart shows the full class-probability distribution.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{examples/agent2.png}
+  \caption{Agent 2 — Classification output. SVM predicts \textsc{Positive} with 91.4\%
+  confidence.}
+  \label{fig:demo_agent2}
+\end{figure}
+
+\textbf{Step 4 — Agent 3: Explainability (Fig.~\ref{fig:demo_agent3}).} The XAI agent runs both
+LIME and SHAP and presents the results side by side. Both methods agree that
+\textit{``superb''} and \textit{``fantastic''} are the strongest positive indicators
+($+$0.28 and $+$0.25 LIME; $+$0.34 and $+$0.31 SHAP), while
+\textit{``plot''} carries a mild negative contribution ($-$0.09 LIME; $+$0.22 SHAP).
+The agent also generates a natural-language explanation summarising the prediction.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{examples/agent3.png}
+  \caption{Agent 3 — Explainability output. LIME (left) and SHAP (right) word-level contribution
+  charts alongside a natural-language explanation generated by the XAI agent.}
+  \label{fig:demo_agent3}
+\end{figure*}
+
+\textbf{TF-IDF Feature Importance (Fig.~\ref{fig:demo_tf}).} In addition to LIME and SHAP,
+the interface displays TF-IDF scores for all n-grams in the input. Bigrams such as
+\textit{``fantastic acting''}, \textit{``absolutely fantastic''}, and
+\textit{``acting superb''} achieve the highest TF-IDF scores (0.43--0.46), confirming that
+the SVM relied on domain-discriminative multi-word expressions.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{examples/tf.png}
+  \caption{TF-IDF word importance scores for the example input. High-scoring bigrams confirm
+  the sentiment-bearing phrases identified by LIME and SHAP.}
+  \label{fig:demo_tf}
+\end{figure}
+
+% ============================================================
 \section{Results}
 \label{sec:results}
 % ============================================================
@@ -490,7 +599,7 @@ between models is again the \texttt{predict\_proba} wrapper passed to the explai
 
 I evaluated all models using Accuracy, Precision (macro), Recall (macro), F1-Macro,
 F1-Weighted, and training time in seconds. Macro F1 is the primary metric for Turkish
-Sentiment because it is imbalanced --- it penalizes models that ignore the minority class.
+Sentiment because it is imbalanced, as it penalizes models that ignore the minority class.
 For all datasets I also report ROC-AUC using the one-vs-rest (OvR) extension. Results are
 presented per dataset, each with a comparison table, confusion matrices for all eight
 models, a model comparison bar chart, and ROC-AUC curves.
@@ -583,7 +692,7 @@ Fig.~\ref{fig:imdb_f1_time} shows the F1 score comparison and training time side
 
 Table~\ref{tab:agnews_results} shows the results for AG News (4-class, 120,000 training
 samples, balanced). The transformer again ranks first at 92.8\%, but the most notable
-result here is that \textbf{Decision Tree collapses to 59.8\%} --- a much steeper drop than
+result here is that \textbf{Decision Tree collapses to 59.8\%}, a much steeper drop than
 on IMDB. This is likely because 4-class topic boundaries require more complex decision
 regions than a shallow tree can represent. KNN (89.2\%) does better than expected and even
 beats Random Forest (88.0\%) and XGBoost (87.3\%), which is unusual and may be related to
@@ -619,7 +728,7 @@ remains the best classical model and is only 1.3\% behind the transformer while 
 Fig.~\ref{fig:agnews_cm} shows the confusion matrices for all 8 models. The Decision Tree
 matrix clearly shows many off-diagonal errors, particularly between World (Class~0) and
 Business (Class~1), which have overlapping vocabulary. Sports (Class~2) is the easiest
-category --- nearly all models classify it almost perfectly, because sports articles use a
+category: nearly all models classify it almost perfectly, because sports articles use a
 very distinctive vocabulary. Fig.~\ref{fig:agnews_compare} shows the overall performance comparison,
 Fig.~\ref{fig:agnews_roc} the per-model ROC-AUC curves broken down by class, and
 Fig.~\ref{fig:agnews_f1_time} the F1 score comparison and training time side by side.
@@ -675,7 +784,7 @@ Table~\ref{tab:trsentiment_results} shows the results for Turkish Sentiment (3-c
 50,000 sampled from 440,679 training samples, imbalanced). Macro F1 is the primary metric
 here because the negative class is only 11.5\% of the data. The most interesting result is
 the large gap between Accuracy and F1-Macro for most models. For example, SVM achieves
-92.2\% accuracy but only 87.7\% macro F1 --- a 4.5-point gap caused by the minority class.
+92.2\% accuracy but only 87.7\% macro F1, a 4.5-point gap caused by the minority class.
 This gap is 8.7 points for Decision Tree (79.4\% vs.\ 70.6\%). The transformer achieves
 the best macro F1 at 93.0\%, but even BERTurk shows a 2.8-point accuracy-to-F1 gap. This
 confirms that class imbalance is a real problem on this dataset regardless of model type.
@@ -764,13 +873,13 @@ Table~\ref{tab:trnews_results} shows the results for Turkish News (7-class, 3,92
 samples, balanced). This is the most challenging dataset because it has 7 classes and
 very little training data (only $\approx$560 samples per class). Despite this, the results
 are surprisingly strong across the board. The transformer (BERTurk) achieves 93.8\%
-accuracy, and SVM is again the best classical model at 91.9\% --- only 1.9 points behind
+accuracy, and SVM is again the best classical model at 91.9\%, only 1.9 points behind
 the transformer. Naive Bayes at 89.9\% is unexpectedly competitive for such a small dataset.
 The biggest finding here is Decision Tree's complete collapse to 46.9\% accuracy and 49.1\%
 F1-Macro, which is barely above random chance for a 7-class problem (random = 14.3\%).
 With only 560 samples per class, a decision tree cannot learn complex enough boundaries.
 KNN (88.5\%) also does well, which I did not expect given that high-dimensional TF-IDF
-spaces usually hurt KNN --- the trigram features with 20K vocabulary may have helped here.
+spaces usually hurt KNN; the trigram features with 20K vocabulary may have helped here.
 The training times are very short since the dataset is small.
 
 \begin{table}[htbp]
@@ -855,8 +964,8 @@ Table~\ref{tab:cross_results} compares F1-Macro and ROC-AUC (macro) for all 8 mo
 all four datasets. A few patterns stand out clearly.
 
 \textbf{Transformer is consistently best.} BERTurk/DistilBERT ranks first on every dataset.
-The margin over the second-best model (always SVM) ranges from 1.2 points (IMDB) to 1.9
-points (Turkish News).
+The margin over the second-best model (always SVM) ranges from 1.2 points (IMDB) to 5.3
+points (Turkish Sentiment); the Turkish News gap is 1.9 points.
 
 \textbf{SVM is the best classical model everywhere.} SVM ranks second on all four datasets,
 which is consistent with the literature on TF-IDF classification. Its accuracy-to-cost ratio
@@ -865,7 +974,7 @@ transformer.
 
 \textbf{Decision Tree collapses on multiclass problems.} On IMDB (binary), DT achieves
 73.3\% F1-Macro. On AG News (4-class) it drops to 61.1\%, and on Turkish News (7-class) it
-falls further to 49.1\% --- barely above random (14.3\%). This shows that shallow decision
+falls further to 49.1\%, barely above random (14.3\%). This shows that shallow decision
 trees simply cannot handle multi-class text classification well.
 
 \textbf{KNN is surprisingly good on balanced datasets.} KNN achieves 89.1\% on AG News
@@ -934,7 +1043,7 @@ hurts all models, but some more than others. Decision Tree has the worst imbalan
 8.7-point gap between accuracy and F1-Macro (79.4\% vs.\ 70.6\%). SVM has a 4.5-point gap.
 The transformer has the smallest gap (2.8 points), showing that BERTurk's contextual
 representations are somewhat more robust to imbalance. Even so, none of the models achieved
-macro F1 above 93\%, which means the negative class is a real problem across the board.
+macro F1 above 93.0\% (the transformer reaches 93.0\%), which means the negative class is a real problem across the board.
 Without class weighting or oversampling, no classifier fully solves the imbalance issue.
 
 \textbf{Turkish morphology.} The results partly confirm the hypothesis that Turkish
@@ -953,15 +1062,15 @@ model's \texttt{predict\_proba} function with a text masker, and \texttt{LimeTex
 perturbs the input text and fits a local linear model. This means the explanations are
 comparable across model types since the same interface is used for all of them. The
 expected difference in interpretability is not about the explainer method but about the
-underlying model: for NB, LR, and SVM, the SHAP feature importances correlate directly
-with TF-IDF weights and are easy to verify manually, while for the transformer the
-explanations reflect a much more complex, non-linear decision function and may be less
-stable across similar inputs.
+underlying model: I hypothesize that for NB, LR, and SVM, the SHAP feature importances
+correlate more directly with TF-IDF weights than for the transformer, whose explanations
+reflect a much more complex, non-linear decision function and may be less stable across
+similar inputs.
 
 \textbf{Multi-agent routing (RQ part 3).} The three-agent pipeline successfully routes
 inputs to the correct dataset-specific model and generates explanations on demand. The
 intent classifier correctly distinguishes between English and Turkish inputs and between
-sentiment and topic tasks based on training examples from each dataset. The modular design
+sentiment and topic tasks based on language and domain understanding provided by the LLM at inference time. The modular design
 also makes it easy to swap or update individual models without affecting the rest of the
 pipeline, which is one practical advantage of the multi-agent architecture.
 
@@ -990,17 +1099,16 @@ The main findings are:
         datasets, but the margin over SVM is only 1.2--1.9 points on three of them. The
         gap is largest on Turkish Sentiment (5.3 points) due to class imbalance, where the
         transformer is more robust to the minority class.
-  \item \textbf{(RQ part 2)} Both SHAP (\texttt{shap.Explainer}) and LIME
-        (\texttt{LimeTextExplainer}) are applied uniformly across all models using a
-        model-agnostic interface. Classical models (NB, LR, SVM) produce explanations
-        that correlate directly with TF-IDF term weights and are easy to verify, while
-        transformer explanations reflect a more complex decision boundary and are harder
-        to interpret intuitively.
+  \item \textbf{(RQ part 2)} The system integrates both SHAP (\texttt{shap.Explainer})
+        and LIME (\texttt{LimeTextExplainer}) via a unified, model-agnostic interface that
+        works for all eight models. On-demand explanations are generated through the
+        Streamlit interface; a systematic comparison of explanation quality across model
+        families is left for future work.
   \item \textbf{(RQ part 3)} The multi-agent architecture successfully routes multilingual
         text and generates on-demand explanations for all eight models. The modular design
         makes it easy to swap or update individual components.
 \end{itemize}
-The most practical takeaway is that SVM with TF-IDF is an excellent baseline --- it trains
+The most practical takeaway is that SVM with TF-IDF is an excellent baseline: it trains
 in under 3 seconds, ranks second on every dataset, and produces interpretable explanations.
 Transformers are only clearly worth the extra training cost when working with highly
 imbalanced data or when the accuracy gap matters for the application.
@@ -1084,84 +1192,30 @@ M.~Wooldridge and N.~R.~Jennings,
 ``Intelligent agents: Theory and practice,''
 \textit{Knowl.\ Eng.\ Rev.}, vol.~10, no.~2, pp.~115--152, Jun.\ 1995.
 
+\bibitem{b_imdb}
+stanfordnlp,
+``Large Movie Review Dataset (IMDB),''
+Hugging Face Datasets, 2022.
+[Online]. Available: \url{https://huggingface.co/datasets/stanfordnlp/imdb}
+
+\bibitem{b_agnews}
+sh0416,
+``AG's News Topic Classification Dataset,''
+Hugging Face Datasets, 2023.
+[Online]. Available: \url{https://huggingface.co/datasets/sh0416/ag_news}
+
+\bibitem{b_trsentiment}
+winvoker,
+``Turkish Sentiment Analysis Dataset,''
+Hugging Face Datasets, 2022.
+[Online]. Available: \url{https://huggingface.co/datasets/winvoker/turkish-sentiment-analysis-dataset}
+
+\bibitem{b_trnews}
+S.~Aras,
+``TTC4900: A Benchmark Data for Turkish Text Categorization,''
+Hugging Face Datasets, 2022.
+[Online]. Available: \url{https://huggingface.co/datasets/savasy/ttc4900}
+
 \end{thebibliography}
-
-\newpage
-\appendix
-
-\section{Code Repository}
-\label{app:code}
-
-The full source code for this project is available at:
-\url{https://github.com/[username]/multi-agent-xai-text-classifier}
-
-\begin{lstlisting}[caption={TF-IDF Preprocessing and Classical Model Pipeline},
-                   label={lst:preprocess}]
-from sklearn.pipeline import Pipeline
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.svm import LinearSVC
-import re
-
-def clean_text(text: str) -> str:
-    """Remove HTML tags and normalize whitespace."""
-    text = re.sub(r'<[^>]+>', ' ', text)
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text.lower()
-
-def build_pipeline(dataset: str = 'imdb'):
-    config = {
-        'imdb':    dict(max_features=50000, ngram_range=(1,2), C=1.0),
-        'agnews':  dict(max_features=30000, ngram_range=(1,2), C=0.5),
-        'tr_sent': dict(max_features=30000, ngram_range=(1,2), C=0.5),
-        'tr_news': dict(max_features=20000, ngram_range=(1,3), C=0.1),
-    }[dataset]
-
-    return Pipeline([
-        ('tfidf', TfidfVectorizer(
-            max_features=config['max_features'],
-            ngram_range=config['ngram_range'],
-            sublinear_tf=True, min_df=2, max_df=0.95
-        )),
-        ('clf', LinearSVC(C=config['C'], max_iter=2000))
-    ])
-\end{lstlisting}
-
-\begin{lstlisting}[caption={XAI Agent: SHAP and LIME Explanation Generation},
-                   label={lst:xai}]
-import shap
-from lime.lime_text import LimeTextExplainer
-
-class XAIAgent:
-    def __init__(self, model, vectorizer=None, model_type='linear'):
-        self.model = model
-        self.vectorizer = vectorizer
-        self.model_type = model_type
-
-    def explain_shap(self, text, num_features=10):
-        if self.model_type == 'tree':
-            explainer = shap.TreeExplainer(self.model)
-        else:
-            background = shap.maskers.Text(r'\s+')
-            explainer = shap.LinearExplainer(self.model, background)
-        vec = self.vectorizer.transform([text])
-        shap_values = explainer.shap_values(vec)
-        return shap_values
-
-    def explain_lime(self, text, num_features=10):
-        explainer = LimeTextExplainer(split_expression=r'\s+')
-        def predict_fn(texts):
-            vecs = self.vectorizer.transform(texts)
-            return self.model.predict_proba(vecs)
-        exp = explainer.explain_instance(
-            text, predict_fn, num_features=num_features
-        )
-        return exp.as_list()
-\end{lstlisting}
-
-\section{Additional Figures and Tables}
-\label{app:additional}
-
-Additional plots and tables (per-class F1 scores, ROC curves for multi-class datasets, and
-SHAP plots for all eight models) will be added here after training is finished.
 
 \end{document}
