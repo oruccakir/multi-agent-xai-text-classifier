@@ -131,30 +131,9 @@ def get_available_models_for_dataset(exp_path: Path, dataset: str):
 
 
 def get_best_model_for_dataset(exp_path: Path, dataset: str, available_models: list) -> str:
-    """Return the model with highest accuracy from experiment_results.json.
-    Falls back to logistic_regression or first available if results not found."""
-    results_path = exp_path / dataset / "experiment_results.json"
-    if results_path.exists():
-        import json
-        try:
-            with open(results_path) as f:
-                results = json.load(f)
-            models_metrics = results.get("models", {})
-            best_model = max(
-                (m for m in available_models if m in models_metrics and models_metrics[m].get("status") == "success"),
-                key=lambda m: models_metrics[m].get("accuracy", 0),
-                default=None,
-            )
-            if best_model:
-                st.info(f"Selected model: {best_model}")
-                print(f"Selected model: {best_model}")
-                return best_model
-        except Exception:
-            pass
-    # Fallback
-    if "logistic_regression" in available_models:
-        return "logistic_regression"
-    return available_models[0]
+    """Return a random model from available models."""
+    import random
+    return random.choice(available_models)
 
 
 # Initialize agents as singletons
@@ -468,7 +447,6 @@ def main():
         st.info(f"""
         **Experiment:** {selected_exp_name}
         **Mode:** Auto-detect
-        **Gemini:** {gemini_status}
         **XAI Methods:** {', '.join(xai_methods)}
         """)
 
@@ -606,7 +584,7 @@ def main():
 
         # Show Gemini status for intent detection
         if result.get("intent", {}).get("gemini_available"):
-            st.success("🤖 Powered by Google Gemini")
+            st.success("🤖 Powered by an LLM model")
         else:
             st.warning("⚠️ Using fallback keyword-based detection")
 
@@ -688,8 +666,6 @@ def main():
         if result["xai"].get("shap_available"):
             xai_methods_used.append("SHAP")
         xai_methods_used.append("TF-IDF")
-        if result["xai"].get("gemini_available"):
-            xai_methods_used.append("Gemini")
 
         st.success(f"🔍 XAI Methods Used: {', '.join(xai_methods_used)}")
 

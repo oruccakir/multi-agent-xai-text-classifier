@@ -1,0 +1,87 @@
+experiment:
+  name: "ag_news_all_models"
+  description: "AG News topic classification - 4-class, balanced, 120K samples, short English texts"
+
+dataset:
+  name: "ag_news"
+  train_path: "data/processed/ag_news_train.csv"
+  test_path: "data/processed/ag_news_test.csv"
+  sample_size: 50000     # 120K → sample 50K: KNN/XGBoost need this; NB/SVM/LR fast regardless
+
+feature_extraction:
+  method: "tfidf"
+  max_features: 30000    # Short texts (~236 chars) → smaller vocabulary sufficient
+  ngram_range: [1, 2]    # Bigrams help: "stock market", "oil prices", "world cup"
+  min_df: 2
+  max_df: 0.95
+  sublinear_tf: true
+  sparse: true
+
+models:
+  naive_bayes:
+    enabled: true
+    alpha: 0.1
+    # Low alpha: large balanced dataset gives strong freq signal.
+    # Short news snippets → tokens appear frequently enough.
+
+  svm:
+    enabled: true
+    C: 0.5
+    max_iter: 2000
+    # C=0.5: slightly stronger regularization for 4-class.
+    # SVM is historically best for news classification with TF-IDF.
+
+  random_forest:
+    enabled: true
+    n_estimators: 200
+    max_depth: null
+    min_samples_split: 5
+    n_jobs: -1
+
+  knn:
+    enabled: true
+    n_neighbors: 5
+    metric: "cosine"
+    weights: "distance"
+    algorithm: "brute"
+    n_jobs: -1
+
+  logistic_regression:
+    enabled: true
+    C: 1.0
+    max_iter: 1000
+    solver: "saga"         # saga: best for large multiclass sparse datasets
+
+  decision_tree:
+    enabled: true
+    max_depth: 25
+    min_samples_split: 5
+    min_samples_leaf: 2
+    criterion: "gini"
+
+  xgboost:
+    enabled: true
+    n_estimators: 200
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    n_jobs: -1
+
+  transformer:
+    enabled: true
+    model_name: "distilbert-base-uncased"
+    fine_tune_mode: "full"
+    learning_rate: 2.0e-5
+    batch_size: 32          # Short texts → larger batch is safe and faster
+    epochs: 3
+    max_length: 128         # Short texts avg 236 chars (~60 tokens); 128 is ample
+    lora_r: 8
+    lora_alpha: 16
+    lora_dropout: 0.1
+    warmup_ratio: 0.1
+    weight_decay: 0.01
+
+output:
+  save_models: true
+  save_feature_extractor: true

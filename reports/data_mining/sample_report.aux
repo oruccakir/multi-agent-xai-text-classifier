@@ -29,8 +29,9 @@
 \newlabel{sec:dataset}{{III}{2}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Data Sources}{2}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Data Characteristics}{2}{}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Dataset Summary}}{2}{}\protected@file@percent }
-\newlabel{tab:dataset_summary}{{I}{2}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Dataset Summary}}{3}{}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{tab:dataset_summary}{{I}{3}{}{}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Class Distribution --- Turkish Sentiment (Training Set)}}{3}{}\protected@file@percent }
 \newlabel{tab:class_dist}{{II}{3}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Ethical Considerations}{3}{}\protected@file@percent }
@@ -41,64 +42,84 @@
 \newlabel{tab:tfidf_params}{{III}{3}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Multi-Agent Architecture}{3}{}\protected@file@percent }
 \newlabel{subsec:architecture}{{\mbox  {IV-B}}{3}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Multi-agent pipeline. Agent 1 routes incoming text; Agent 2 classifies; Agent 3 explains. [FIGURE PLACEHOLDER --- replace with architecture diagram after training.]}}{3}{}\protected@file@percent }
-\newlabel{fig:architecture}{{1}{3}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Model Configurations}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Experimental Setup}{3}{}\protected@file@percent }
 \citation{b4}
-\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Model Hyperparameter Summary}}{4}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Multi-agent pipeline. Agent~1 (Intent Classifier) detects language and domain, routing the input to the correct dataset and model. Agent~2 (Classification Agent) runs one of eight classifiers (seven classical data mining models or a transformer) and returns the predicted label with confidence scores. Agent~3 (XAI Agent) generates explanations using \texttt  {shap.Explainer} (generic, model-agnostic) and \texttt  {LimeTextExplainer}, both applied uniformly across all model types.}}{4}{}\protected@file@percent }
+\newlabel{fig:architecture}{{1}{4}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Model Hyperparameter Configuration per Dataset}}{4}{}\protected@file@percent }
 \newlabel{tab:model_params}{{IV}{4}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Experimental Setup}{4}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}Explainability Methods}{4}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {V}Results}{4}{}\protected@file@percent }
-\newlabel{sec:results}{{V}{4}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Evaluation Metrics}{4}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}IMDB Sentiment Analysis}{4}{}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces IMDB Sentiment Classification Results}}{4}{}\protected@file@percent }
-\newlabel{tab:imdb_results}{{V}{4}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}AG News Topic Classification}{4}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces IMDB: Confusion matrices for all 8 models. Rows = actual class, columns = predicted class. Classes: negative (0) / positive (1).}}{5}{}\protected@file@percent }
-\newlabel{fig:imdb_cm}{{2}{5}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces IMDB: Model performance comparison (Accuracy, F1-Macro, Precision, Recall) across all 8 models. Transformer ranks first, followed closely by SVM and Logistic Regression.}}{5}{}\protected@file@percent }
-\newlabel{fig:imdb_compare}{{3}{5}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}Explainability Methods}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {V}Results}{5}{}\protected@file@percent }
+\newlabel{sec:results}{{V}{5}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Evaluation Metrics}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}IMDB Sentiment Analysis}{5}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces IMDB Sentiment Classification Results}}{5}{}\protected@file@percent }
+\newlabel{tab:imdb_results}{{V}{5}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}AG News Topic Classification}{5}{}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces AG News Topic Classification Results}}{5}{}\protected@file@percent }
 \newlabel{tab:agnews_results}{{VI}{5}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces IMDB: ROC-AUC curves for all 8 models. Transformer (AUC=0.968) and SVM (AUC=0.961) perform best. Decision Tree (AUC=0.776) and KNN (AUC=0.793) are the weakest.}}{6}{}\protected@file@percent }
-\newlabel{fig:imdb_roc}{{4}{6}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces IMDB: F1-Macro vs.\ F1-Weighted comparison across all 8 models. The two bars are nearly identical for every model, which confirms that IMDB is a perfectly balanced binary dataset (50\% positive / 50\% negative). On balanced datasets, macro and weighted averaging give the same result, so accuracy alone is a reliable metric here. The ranking is consistent with Table~\ref {tab:imdb_results}: Transformer $>$ SVM $\approx $ Logistic Regression $>$ Naive Bayes $\approx $ Random Forest $\approx $ XGBoost $>$ Decision Tree $\approx $ KNN.}}{6}{}\protected@file@percent }
-\newlabel{fig:imdb_f1}{{5}{6}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Turkish Sentiment Analysis}{6}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Turkish News Classification}{6}{}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Turkish Sentiment Classification Results (primary metric: F1-Macro)}}{6}{}\protected@file@percent }
-\newlabel{tab:trsentiment_results}{{VII}{6}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces IMDB: Training time comparison (seconds). The transformer takes 1,018 seconds ($\approx $17 min) while all classical models train in under 75 seconds. SVM trains in only 0.40 seconds with just 1.2\% lower accuracy than the transformer, making it the best accuracy-to-cost tradeoff on this dataset.}}{7}{}\protected@file@percent }
-\newlabel{fig:imdb_time}{{6}{7}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces AG News: Confusion matrices for all 8 models. Classes: World (0) / Business (1) / Sports (2) / Sci\&Tech (3). Sports (Class~2) has the cleanest diagonal across all models. Decision Tree shows the most off-diagonal errors, especially between World and Business.}}{7}{}\protected@file@percent }
-\newlabel{fig:agnews_cm}{{7}{7}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {VIII}{\ignorespaces Turkish News Classification Results}}{7}{}\protected@file@percent }
-\newlabel{tab:trnews_results}{{VIII}{7}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-F}}Cross-Dataset Comparison}{7}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces AG News: Model performance comparison (Accuracy, F1-Macro, Precision, Recall). All models except Decision Tree score above 87\%. SVM and Logistic Regression are competitive with the transformer while being orders of magnitude faster.}}{8}{}\protected@file@percent }
-\newlabel{fig:agnews_compare}{{8}{8}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces AG News: F1-Macro vs.\ F1-Weighted comparison. As with IMDB, the two metrics are nearly identical for all models, confirming that AG News is a well-balanced 4-class dataset ($\approx $30,000 samples per class). Decision Tree is the only model where Precision visibly exceeds Recall, indicating it over-predicts the majority-pattern classes while missing harder examples.}}{8}{}\protected@file@percent }
-\newlabel{fig:agnews_f1}{{9}{8}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {VI}Discussion}{8}{}\protected@file@percent }
-\newlabel{sec:discussion}{{VI}{8}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces AG News: ROC-AUC curves per model (one subplot per model, OvR). All models except Decision Tree achieve near-perfect AUC on Sports. SVM achieves AUC\,$\geq $\,0.97 on all four classes. Decision Tree shows clearly degraded curves, especially for World and Business, consistent with the confusion matrix.}}{9}{}\protected@file@percent }
-\newlabel{fig:agnews_roc}{{10}{9}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces AG News: Training time comparison. Transformer ($\approx $951s) and XGBoost ($\approx $150s) dominate training cost. SVM trains in 2.6 seconds with only 1.3\% lower accuracy than the transformer. KNN has near-zero training time (cost is deferred to inference) but still outperforms Random Forest and XGBoost.}}{10}{}\protected@file@percent }
-\newlabel{fig:agnews_time}{{11}{10}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Turkish Sentiment: Confusion matrices for all 8 models (2$\times $4 grid). Classes: pozitif / notr / negatif. Note the imbalance visible in the matrices. [PLACEHOLDER --- replace with generated figure.]}}{10}{}\protected@file@percent }
-\newlabel{fig:trsent_cm}{{12}{10}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Turkish Sentiment: F1-Macro comparison across all 8 models. [PLACEHOLDER --- replace with generated figure.]}}{10}{}\protected@file@percent }
-\newlabel{fig:trsent_compare}{{13}{10}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Turkish Sentiment: ROC-AUC curves for all 8 models (OvR). [PLACEHOLDER --- replace with generated figure.]}}{10}{}\protected@file@percent }
-\newlabel{fig:trsent_roc}{{14}{10}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Turkish News: Confusion matrices for all 8 models (2$\times $4 grid). 7 classes: siyaset, saglik, teknoloji, kultur, spor, ekonomi, dunya. [PLACEHOLDER --- replace with generated figure.]}}{10}{}\protected@file@percent }
-\newlabel{fig:trnews_cm}{{15}{10}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Turkish News: F1-Macro comparison across all 8 models. [PLACEHOLDER --- replace with generated figure.]}}{10}{}\protected@file@percent }
-\newlabel{fig:trnews_compare}{{16}{10}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Turkish News: ROC-AUC curves for all 8 models (OvR). [PLACEHOLDER --- replace with generated figure.]}}{10}{}\protected@file@percent }
-\newlabel{fig:trnews_roc}{{17}{10}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Turkish Sentiment Analysis}{5}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces IMDB: Confusion matrices for all 8 models. Rows = actual class, columns = predicted class. Classes: negative (0) / positive (1).}}{6}{}\protected@file@percent }
+\newlabel{fig:imdb_cm}{{2}{6}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces IMDB: Model performance comparison (Accuracy, F1-Macro, Precision, Recall) across all 8 models. Transformer ranks first, followed closely by SVM and Logistic Regression.}}{6}{}\protected@file@percent }
+\newlabel{fig:imdb_compare}{{3}{6}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces IMDB: ROC-AUC curves for all 8 models. Transformer (AUC=0.968) and SVM (AUC=0.961) perform best. Decision Tree (AUC=0.776) and KNN (AUC=0.793) are the weakest.}}{7}{}\protected@file@percent }
+\newlabel{fig:imdb_roc}{{4}{7}{}{}{}}
+\newlabel{fig:imdb_f1}{{5a}{7}{}{}{}}
+\newlabel{sub@fig:imdb_f1}{{a}{7}{}{}{}}
+\newlabel{fig:imdb_time}{{5b}{7}{}{}{}}
+\newlabel{sub@fig:imdb_time}{{b}{7}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces IMDB: F1 score comparison (left) and training time in seconds (right).}}{7}{}\protected@file@percent }
+\newlabel{fig:imdb_f1_time}{{5}{7}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Turkish Sentiment Results (primary metric: F1-Macro)}}{7}{}\protected@file@percent }
+\newlabel{tab:trsentiment_results}{{VII}{7}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Turkish News Classification}{7}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces AG News: Confusion matrices for all 8 models. Classes: World (0) / Business (1) / Sports (2) / Sci\&Tech (3). Sports (Class~2) has the cleanest diagonal across all models. Decision Tree shows the most off-diagonal errors, especially between World and Business.}}{8}{}\protected@file@percent }
+\newlabel{fig:agnews_cm}{{6}{8}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces AG News: Model performance comparison (Accuracy, F1-Macro, Precision, Recall). All models except Decision Tree score above 87\%. SVM and Logistic Regression are competitive with the transformer while being orders of magnitude faster.}}{8}{}\protected@file@percent }
+\newlabel{fig:agnews_compare}{{7}{8}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces AG News: ROC-AUC curves per model (OvR). All models except Decision Tree achieve near-perfect AUC on Sports. SVM achieves AUC\,$\geq $\,0.97 on all four classes. Decision Tree shows clearly degraded curves on World and Business.}}{9}{}\protected@file@percent }
+\newlabel{fig:agnews_roc}{{8}{9}{}{}{}}
+\newlabel{fig:agnews_f1}{{9a}{9}{}{}{}}
+\newlabel{sub@fig:agnews_f1}{{a}{9}{}{}{}}
+\newlabel{fig:agnews_time}{{9b}{9}{}{}{}}
+\newlabel{sub@fig:agnews_time}{{b}{9}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces AG News: F1 score comparison (left) and training time in seconds (right).}}{9}{}\protected@file@percent }
+\newlabel{fig:agnews_f1_time}{{9}{9}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Turkish Sentiment: Confusion matrices for all 8 models. Classes: negatif\,/\,notr\,/\,pozitif. The minority \textit  {negatif} class is consistently the hardest to classify correctly across all models.}}{10}{}\protected@file@percent }
+\newlabel{fig:trsent_cm}{{10}{10}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Turkish Sentiment: Model performance comparison. The transformer leads on macro F1 (0.930), followed by SVM (0.877). All classical models suffer a visible gap between accuracy and F1-Macro due to the imbalanced negative class.}}{10}{}\protected@file@percent }
+\newlabel{fig:trsent_compare}{{11}{10}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-F}}Cross-Dataset Comparison}{10}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Turkish Sentiment: ROC-AUC curves (OvR per model). Transformer macro AUC=0.991. All models show lower AUC on \textit  {negatif} than on \textit  {pozitif}, consistent with the class imbalance.}}{11}{}\protected@file@percent }
+\newlabel{fig:trsent_roc}{{12}{11}{}{}{}}
+\newlabel{fig:trsent_f1}{{13a}{11}{}{}{}}
+\newlabel{sub@fig:trsent_f1}{{a}{11}{}{}{}}
+\newlabel{fig:trsent_time}{{13b}{11}{}{}{}}
+\newlabel{sub@fig:trsent_time}{{b}{11}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Turkish Sentiment: F1 imbalance gap (left) and training time in seconds (right).}}{11}{}\protected@file@percent }
+\newlabel{fig:trsent_f1_time}{{13}{11}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Turkish News: Confusion matrices for all 8 models. Classes: dunya, ekonomi, kultur, saglik, siyaset, spor, teknoloji. Decision Tree shows near-random predictions. All other models have a strong diagonal, especially for \textit  {spor}.}}{12}{}\protected@file@percent }
+\newlabel{fig:trnews_cm}{{14}{12}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Turkish News: Model performance comparison. Transformer leads at 93.8\%, followed by SVM (91.9\%) and Naive Bayes (89.9\%). The gap between the transformer and top classical models is slightly larger than on IMDB/AG~News, consistent with the small dataset and high class count.}}{12}{}\protected@file@percent }
+\newlabel{fig:trnews_compare}{{15}{12}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Discussion}{12}{}\protected@file@percent }
+\newlabel{sec:discussion}{{VI}{12}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Turkish News: ROC-AUC curves (OvR per model). Transformer macro AUC=0.994, SVM and NB both $>$0.99. Decision Tree drops to 0.783. \textit  {Spor} is near-perfect for all models except Decision Tree.}}{13}{}\protected@file@percent }
+\newlabel{fig:trnews_roc}{{16}{13}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VIII}{\ignorespaces Turkish News Classification Results (7-class)}}{13}{}\protected@file@percent }
+\newlabel{tab:trnews_results}{{VIII}{13}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {IX}{\ignorespaces Cross-Dataset F1-Macro / Macro AUC Summary}}{13}{}\protected@file@percent }
+\newlabel{tab:cross_results}{{IX}{13}{}{}{}}
+\newlabel{fig:trnews_f1}{{17a}{14}{}{}{}}
+\newlabel{sub@fig:trnews_f1}{{a}{14}{}{}{}}
+\newlabel{fig:trnews_time}{{17b}{14}{}{}{}}
+\newlabel{sub@fig:trnews_time}{{b}{14}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Turkish News: F1 score comparison (left) and training time in seconds (right).}}{14}{}\protected@file@percent }
+\newlabel{fig:trnews_f1_time}{{17}{14}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclusion and Future Work}{14}{}\protected@file@percent }
+\newlabel{sec:conclusion}{{VII}{14}{}{}{}}
 \bibcite{b1}{1}
 \bibcite{b2}{2}
 \bibcite{b3}{3}
@@ -111,16 +132,12 @@
 \bibcite{b10}{10}
 \bibcite{b_brooks}{11}
 \bibcite{b_wj}{12}
-\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces Cross-dataset comparison: F1-Macro for all 8 models across all 4 datasets. [PLACEHOLDER --- replace with generated figure.]}}{11}{}\protected@file@percent }
-\newlabel{fig:cross_compare}{{18}{11}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclusion and Future Work}{11}{}\protected@file@percent }
-\newlabel{sec:conclusion}{{VII}{11}{}{}{}}
-\@writefile{toc}{\contentsline {section}{References}{11}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{Appendix}{12}{}\protected@file@percent }
-\newlabel{app:code}{{A}{12}{}{}{}}
-\newlabel{lst:preprocess}{{1}{12}{}{}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}TF-IDF Preprocessing and Classical Model Pipeline}{12}{}\protected@file@percent }
-\newlabel{lst:xai}{{2}{12}{}{}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}XAI Agent: SHAP and LIME Explanation Generation}{12}{}\protected@file@percent }
-\newlabel{app:additional}{{A}{12}{}{}{}}
-\gdef \@abspage@last{12}
+\@writefile{toc}{\contentsline {section}{References}{16}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{Appendix}{16}{}\protected@file@percent }
+\newlabel{app:code}{{A}{16}{}{}{}}
+\newlabel{lst:preprocess}{{1}{16}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}{\ignorespaces TF-IDF Preprocessing and Classical Model Pipeline}}{16}{}\protected@file@percent }
+\newlabel{lst:xai}{{2}{16}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}{\ignorespaces XAI Agent: SHAP and LIME Explanation Generation}}{16}{}\protected@file@percent }
+\newlabel{app:additional}{{A}{17}{}{}{}}
+\gdef \@abspage@last{17}

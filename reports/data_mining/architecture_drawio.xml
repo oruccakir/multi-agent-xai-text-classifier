@@ -1,0 +1,73 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Multi-Agent Architecture">
+    <mxGraphModel dx="1200" dy="800" grid="0" gridSize="10" guides="1" tooltips="1"
+                  connect="1" arrows="1" fold="1" page="0" pageScale="1"
+                  pageWidth="1200" pageHeight="500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ── INPUT ── -->
+        <mxCell id="10" value="&lt;b&gt;User Input&lt;/b&gt;&lt;br&gt;Raw Text" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="30" y="185" width="130" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ── AGENT 1 ── -->
+        <mxCell id="20" value="&lt;b&gt;Agent 1&lt;/b&gt;&lt;br&gt;Intent Classifier" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;arcSize=10;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="220" y="100" width="180" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="21" value="• Language detection&lt;br&gt;  (EN / TR)&lt;br&gt;• Domain classification&lt;br&gt;  (Sentiment / News)&lt;br&gt;• Selects dataset &amp; model&lt;br&gt;&lt;br&gt;↓ outputs:&lt;br&gt;&lt;i&gt;dataset_id, model_name&lt;/i&gt;" style="text;html=1;fontSize=11;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="228" y="145" width="164" height="178" as="geometry" />
+        </mxCell>
+
+        <!-- ── AGENT 2 ── -->
+        <mxCell id="30" value="&lt;b&gt;Agent 2&lt;/b&gt;&lt;br&gt;Classification Agent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;arcSize=10;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="460" y="100" width="180" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="31" value="Classical Models:&lt;br&gt;• Naive Bayes&lt;br&gt;• SVM (LinearSVC)&lt;br&gt;• Logistic Regression&lt;br&gt;• Random Forest&lt;br&gt;• KNN  • XGBoost&lt;br&gt;• Decision Tree&lt;br&gt;Deep Learning:&lt;br&gt;• DistilBERT / BERTurk" style="text;html=1;fontSize=11;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="468" y="145" width="164" height="178" as="geometry" />
+        </mxCell>
+
+        <!-- ── AGENT 3 ── -->
+        <mxCell id="40" value="&lt;b&gt;Agent 3&lt;/b&gt;&lt;br&gt;XAI Agent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=13;arcSize=10;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="700" y="100" width="180" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="41" value="SHAP:&lt;br&gt;• shap.Explainer (all models)&lt;br&gt;• Text masker (\W+ tokenizer)&lt;br&gt;• predict_proba wrapper&lt;br&gt;&lt;br&gt;LIME:&lt;br&gt;• LimeTextExplainer&lt;br&gt;  (all models, BoW mode)&lt;br&gt;&lt;br&gt;→ Top-10 features" style="text;html=1;fontSize=11;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="708" y="145" width="164" height="178" as="geometry" />
+        </mxCell>
+
+        <!-- ── OUTPUT ── -->
+        <mxCell id="50" value="&lt;b&gt;Output&lt;/b&gt;&lt;br&gt;Label + Confidence&lt;br&gt;+ Explanation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="940" y="180" width="140" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ── ARROWS ── -->
+        <!-- Input → Agent 1 -->
+        <mxCell id="60" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeWidth=2;strokeColor=#6c8ebf;" edge="1" source="10" target="20" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Agent 1 → Agent 2 -->
+        <mxCell id="61" value="dataset_id&lt;br&gt;model_name" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeWidth=2;strokeColor=#82b366;fontSize=10;" edge="1" source="20" target="30" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Agent 2 → Agent 3 -->
+        <mxCell id="62" value="text + prediction&lt;br&gt;+ confidence" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeWidth=2;strokeColor=#b85450;fontSize=10;" edge="1" source="30" target="40" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Agent 3 → Output -->
+        <mxCell id="63" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeWidth=2;strokeColor=#9673a6;" edge="1" source="40" target="50" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ── TF-IDF label under Agent 2 ── -->
+        <mxCell id="70" value="TF-IDF features (classical) │ Subword tokens (transformer)" style="text;html=1;fontSize=10;align=center;fontStyle=2;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="400" y="345" width="380" height="20" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

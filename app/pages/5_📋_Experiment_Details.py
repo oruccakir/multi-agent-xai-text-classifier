@@ -195,7 +195,7 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
     perf_cols = ["accuracy", "f1_macro", "precision", "recall"]
     perf_vals = metrics_df[perf_cols].values.flatten()
     y_min = max(0.0, float(perf_vals.min()) - 0.06)
-    y_max = min(1.0, float(perf_vals.max()) + 0.02)
+    y_max = min(1.0, float(perf_vals.max()) + 0.06)
 
     fig = go.Figure()
     for col, label, color in [
@@ -204,11 +204,15 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
         ("precision", "Precision",   "#FF9800"),
         ("recall",    "Recall",      "#E91E63"),
     ]:
+        vals = metrics_df[col].tolist()
         fig.add_trace(go.Bar(
             name=label,
             x=models,
-            y=metrics_df[col].tolist(),
+            y=vals,
             marker_color=color,
+            text=[f"{v:.2f}" for v in vals],
+            textposition="outside",
+            textfont=dict(color="black", size=9, family="Arial"),
         ))
 
     fig.update_layout(
@@ -240,20 +244,28 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
     with col1:
         f1_vals = metrics_df[["f1_macro", "f1_weighted"]].values.flatten()
         f1_min = max(0.0, float(f1_vals.min()) - 0.06)
-        f1_max = min(1.0, float(f1_vals.max()) + 0.02)
+        f1_max = min(1.0, float(f1_vals.max()) + 0.06)
 
         fig2 = go.Figure()
+        f1_macro_vals = metrics_df["f1_macro"].tolist()
+        f1_weighted_vals = metrics_df["f1_weighted"].tolist()
         fig2.add_trace(go.Bar(
             name="F1 (Macro)",
             x=models,
-            y=metrics_df["f1_macro"].tolist(),
+            y=f1_macro_vals,
             marker_color="#4CAF50",
+            text=[f"{v:.2f}" for v in f1_macro_vals],
+            textposition="outside",
+            textfont=dict(color="black", size=9, family="Arial"),
         ))
         fig2.add_trace(go.Bar(
             name="F1 (Weighted)",
             x=models,
-            y=metrics_df["f1_weighted"].tolist(),
+            y=f1_weighted_vals,
             marker_color="#8BC34A",
+            text=[f"{v:.2f}" for v in f1_weighted_vals],
+            textposition="outside",
+            textfont=dict(color="black", size=9, family="Arial"),
         ))
         fig2.update_layout(
             title="F1 Macro vs F1 Weighted",
@@ -282,6 +294,10 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
         times = metrics_df["train_time"].tolist()
         use_log = max(times) / (min(t for t in times if t > 0) or 1) > 20
 
+        # On log scale "outside" labels clip; use "inside" so transformer label stays visible
+        text_pos = "inside" if use_log else "outside"
+        text_color = "white" if use_log else "black"
+
         fig3 = go.Figure()
         fig3.add_trace(go.Bar(
             x=models,
@@ -289,8 +305,8 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
             marker_color="#F44336",
             showlegend=False,
             text=[f"{t:.1f}s" for t in times],
-            textposition="outside",
-            textfont=dict(color="black", size=10),
+            textposition=text_pos,
+            textfont=dict(color=text_color, size=10, family="Arial"),
         ))
         fig3.update_layout(
             title="Training Time (seconds)" + (" — log scale" if use_log else ""),
@@ -326,7 +342,7 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
             "Precision": "{:.2%}",
             "Recall": "{:.2%}",
             "Train Time (s)": "{:.2f}",
-        }).background_gradient(subset=["Accuracy", "F1 (Macro)"], cmap="Greens"),
+        }),
         width="stretch",
         hide_index=True,
     )
@@ -524,7 +540,7 @@ def display_roc_curves(results: dict):
     auc_cols = [c for c in auc_df.columns if c != "Model"]
     st.dataframe(
         auc_df.style.format({c: "{:.4f}" for c in auc_cols})
-        .background_gradient(subset=auc_cols, cmap="Greens"),
+        ,
         width="stretch",
         hide_index=True,
     )
