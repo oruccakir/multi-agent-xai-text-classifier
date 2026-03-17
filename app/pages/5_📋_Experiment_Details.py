@@ -187,7 +187,16 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
 
     models = metrics_df["Model"].tolist()
 
+    # shared axis label style
+    _axis_font = dict(color="black", size=13, family="Arial")
+    _tick_font = dict(color="black", size=11)
+
     # ── Grouped bar: Accuracy, F1 Macro, Precision, Recall ──────────────────
+    perf_cols = ["accuracy", "f1_macro", "precision", "recall"]
+    perf_vals = metrics_df[perf_cols].values.flatten()
+    y_min = max(0.0, float(perf_vals.min()) - 0.06)
+    y_max = min(1.0, float(perf_vals.max()) + 0.06)
+
     fig = go.Figure()
     for col, label, color in [
         ("accuracy",  "Accuracy",    "#2196F3"),
@@ -195,69 +204,129 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
         ("precision", "Precision",   "#FF9800"),
         ("recall",    "Recall",      "#E91E63"),
     ]:
+        vals = metrics_df[col].tolist()
         fig.add_trace(go.Bar(
             name=label,
             x=models,
-            y=metrics_df[col].tolist(),
+            y=vals,
             marker_color=color,
+            text=[f"{v:.2f}" for v in vals],
+            textposition="outside",
+            textfont=dict(color="black", size=9, family="Arial"),
         ))
 
     fig.update_layout(
         title="Model Performance Comparison",
         barmode="group",
-        yaxis_title="Score",
-        yaxis_tickformat=".0%",
-        yaxis_range=[0, 1.05],
+        yaxis=dict(
+            title="Score",
+            title_font=_axis_font,
+            tickfont=_tick_font,
+            tickformat=".0%",
+            range=[y_min, y_max],
+            gridcolor="#e0e0e0",
+        ),
+        xaxis=dict(
+            title="Model",
+            title_font=_axis_font,
+            tickfont=_tick_font,
+        ),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        height=420,
-        xaxis_title="",
+        height=440,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
     )
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)
 
     # ── Second row: F1 Macro vs Weighted  |  Training Time ──────────────────
     col1, col2 = st.columns(2)
 
     with col1:
+        f1_vals = metrics_df[["f1_macro", "f1_weighted"]].values.flatten()
+        f1_min = max(0.0, float(f1_vals.min()) - 0.06)
+        f1_max = min(1.0, float(f1_vals.max()) + 0.06)
+
         fig2 = go.Figure()
+        f1_macro_vals = metrics_df["f1_macro"].tolist()
+        f1_weighted_vals = metrics_df["f1_weighted"].tolist()
         fig2.add_trace(go.Bar(
             name="F1 (Macro)",
             x=models,
-            y=metrics_df["f1_macro"].tolist(),
+            y=f1_macro_vals,
             marker_color="#4CAF50",
+            text=[f"{v:.2f}" for v in f1_macro_vals],
+            textposition="outside",
+            textfont=dict(color="black", size=9, family="Arial"),
         ))
         fig2.add_trace(go.Bar(
             name="F1 (Weighted)",
             x=models,
-            y=metrics_df["f1_weighted"].tolist(),
+            y=f1_weighted_vals,
             marker_color="#8BC34A",
+            text=[f"{v:.2f}" for v in f1_weighted_vals],
+            textposition="outside",
+            textfont=dict(color="black", size=9, family="Arial"),
         ))
         fig2.update_layout(
             title="F1 Macro vs F1 Weighted",
             barmode="group",
-            yaxis_title="Score",
-            yaxis_tickformat=".0%",
-            yaxis_range=[0, 1.05],
+            yaxis=dict(
+                title="Score",
+                title_font=_axis_font,
+                tickfont=_tick_font,
+                tickformat=".0%",
+                range=[f1_min, f1_max],
+                gridcolor="#e0e0e0",
+            ),
+            xaxis=dict(
+                title="Model",
+                title_font=_axis_font,
+                tickfont=_tick_font,
+            ),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            height=380,
-            xaxis_title="",
+            height=400,
+            plot_bgcolor="white",
+            paper_bgcolor="white",
         )
-        st.plotly_chart(fig2, width="stretch")
+        st.plotly_chart(fig2, use_container_width=True)
 
     with col2:
+        times = metrics_df["train_time"].tolist()
+        use_log = max(times) / (min(t for t in times if t > 0) or 1) > 20
+
+        # On log scale "outside" labels clip; use "inside" so transformer label stays visible
+        text_pos = "inside" if use_log else "outside"
+        text_color = "white" if use_log else "black"
+
         fig3 = go.Figure()
         fig3.add_trace(go.Bar(
             x=models,
-            y=metrics_df["train_time"].tolist(),
+            y=times,
             marker_color="#F44336",
             showlegend=False,
+            text=[f"{t:.1f}s" for t in times],
+            textposition=text_pos,
+            textfont=dict(color=text_color, size=10, family="Arial"),
         ))
         fig3.update_layout(
-            title="Training Time (seconds)",
-            yaxis_title="Time (s)",
-            height=380,
-            xaxis_title="",
+            title="Training Time (seconds)" + (" — log scale" if use_log else ""),
+            yaxis=dict(
+                title="Time (s)",
+                title_font=_axis_font,
+                tickfont=_tick_font,
+                type="log" if use_log else "linear",
+                gridcolor="#e0e0e0",
+            ),
+            xaxis=dict(
+                title="Model",
+                title_font=_axis_font,
+                tickfont=_tick_font,
+            ),
+            height=400,
+            plot_bgcolor="white",
+            paper_bgcolor="white",
         )
-        st.plotly_chart(fig3, width="stretch")
+        st.plotly_chart(fig3, use_container_width=True)
 
     # ── Detailed metrics table ───────────────────────────────────────────────
     st.markdown("#### Detailed Metrics")
@@ -273,7 +342,7 @@ def display_metrics_comparison(metrics_df: pd.DataFrame):
             "Precision": "{:.2%}",
             "Recall": "{:.2%}",
             "Train Time (s)": "{:.2f}",
-        }).background_gradient(subset=["Accuracy", "F1 (Macro)"], cmap="Greens"),
+        }),
         width="stretch",
         hide_index=True,
     )
@@ -353,12 +422,24 @@ def display_roc_curves(results: dict):
             showlegend=True,
         ))
 
+        _axis_font = dict(color="black", size=13, family="Arial")
+        _tick_font = dict(color="black", size=11)
         fig.update_layout(
             title=f"ROC Curves — All Models (class: {cls})",
             xaxis_title="False Positive Rate",
             yaxis_title="True Positive Rate",
-            xaxis=dict(range=[0, 1]),
-            yaxis=dict(range=[0, 1.02]),
+            xaxis=dict(
+                range=[0, 1],
+                title_font=_axis_font,
+                tickfont=_tick_font,
+                linecolor="black",
+            ),
+            yaxis=dict(
+                range=[0, 1.02],
+                title_font=_axis_font,
+                tickfont=_tick_font,
+                linecolor="black",
+            ),
             legend=dict(orientation="v", x=0.6, y=0.05),
             height=500,
         )
@@ -423,8 +504,24 @@ def display_roc_curves(results: dict):
             height=350 * nrows,
             legend=dict(orientation="v"),
         )
-        fig.update_xaxes(title_text="FPR", range=[0, 1])
-        fig.update_yaxes(title_text="TPR", range=[0, 1.02])
+        for ann in fig.layout.annotations:
+            ann.font = dict(color="black", size=13, family="Arial")
+        _axis_font = dict(color="black", size=12, family="Arial")
+        _tick_font = dict(color="black", size=10)
+        fig.update_xaxes(
+            title_text="FPR",
+            range=[0, 1],
+            title_font=_axis_font,
+            tickfont=_tick_font,
+            linecolor="black",
+        )
+        fig.update_yaxes(
+            title_text="TPR",
+            range=[0, 1.02],
+            title_font=_axis_font,
+            tickfont=_tick_font,
+            linecolor="black",
+        )
         st.plotly_chart(fig, width="stretch")
 
     # AUC summary table
@@ -443,7 +540,7 @@ def display_roc_curves(results: dict):
     auc_cols = [c for c in auc_df.columns if c != "Model"]
     st.dataframe(
         auc_df.style.format({c: "{:.4f}" for c in auc_cols})
-        .background_gradient(subset=auc_cols, cmap="Greens"),
+        ,
         width="stretch",
         hide_index=True,
     )
@@ -462,13 +559,15 @@ def display_confusion_matrices(results: dict):
 
     # Create grid of confusion matrices
     cols = st.columns(min(3, num_models))
-    classes = get_classes(results) or ["Class 0", "Class 1"]
+    global_classes = get_classes(results)
 
     for i, (model_name, model_data) in enumerate(model_results.items()):
         if "confusion_matrix" not in model_data:
             continue
 
         cm = np.array(model_data["confusion_matrix"])
+        n = cm.shape[0]
+        classes = global_classes if len(global_classes) == n else [f"Class {j}" for j in range(n)]
 
         icon = MODEL_ICONS.get(model_name, "📦")
         display_name = MODEL_DISPLAY_NAMES.get(model_name, model_name)
@@ -482,10 +581,26 @@ def display_confusion_matrices(results: dict):
                 color_continuous_scale="Blues",
                 text_auto=True,
             )
+            _axis_font = dict(color="black", size=12, family="Arial")
+            _tick_font = dict(color="black", size=10)
             fig.update_layout(
                 title=display_name,
                 height=300,
                 margin=dict(l=10, r=10, t=40, b=10),
+                xaxis=dict(
+                    title_font=_axis_font,
+                    tickfont=_tick_font,
+                    linecolor="black",
+                ),
+                yaxis=dict(
+                    title_font=_axis_font,
+                    tickfont=_tick_font,
+                    linecolor="black",
+                ),
+                coloraxis_colorbar=dict(
+                    tickfont=dict(color="black", size=10),
+                    title_font=dict(color="black", size=11),
+                ),
             )
             st.plotly_chart(fig, width="stretch")
 

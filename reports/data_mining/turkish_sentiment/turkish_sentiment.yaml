@@ -1,0 +1,89 @@
+experiment:
+  name: "turkish_sentiment_all_models"
+  description: "Turkish sentiment classification - 3-class, IMBALANCED (pos:53%, notr:35%, neg:12%), 440K samples, short Turkish texts"
+
+dataset:
+  name: "turkish_sentiment"
+  train_path: "data/processed/turkish_sentiment_train.csv"
+  test_path: "data/processed/turkish_sentiment_test.csv"
+  sample_size: 50000     # 440K → sample 50K: KNN/XGBoost/DT need this.
+                         # Stratified sampling in loader preserves class ratios.
+
+feature_extraction:
+  method: "tfidf"
+  max_features: 30000    # Turkish morphology: words inflect heavily → more unique tokens
+  ngram_range: [1, 2]    # Bigrams capture negation: "çok iyi", "hiç beğenmedim"
+  min_df: 3              # Higher min_df: filter Turkish morphological noise
+  max_df: 0.95
+  sublinear_tf: true
+  sparse: true
+
+models:
+  naive_bayes:
+    enabled: true
+    alpha: 0.5
+    # alpha=0.5: more smoothing than English.
+    # Turkish morphology creates many rare/unseen token combinations.
+
+  svm:
+    enabled: true
+    C: 0.5
+    max_iter: 2000
+    # C=0.5: moderate regularization for imbalanced 3-class problem.
+    # Note: class imbalance (neg only 12%) will hurt minority class recall.
+    # Analyze in Discussion section (class_weight='balanced' not exposed).
+
+  random_forest:
+    enabled: true
+    n_estimators: 200
+    max_depth: null
+    min_samples_split: 10  # Higher due to imbalance: prevent splits on minority noise
+    n_jobs: -1
+
+  knn:
+    enabled: true
+    n_neighbors: 5
+    metric: "cosine"
+    weights: "distance"
+    algorithm: "brute"
+    n_jobs: -1
+
+  logistic_regression:
+    enabled: true
+    C: 0.5                 # Stronger regularization: imbalanced data
+    max_iter: 1000
+    solver: "saga"         # saga: best for large + multiclass + sparse
+
+  decision_tree:
+    enabled: true
+    max_depth: 20
+    min_samples_split: 10
+    min_samples_leaf: 5    # Higher leaf size: resist overfitting to imbalanced minority
+    criterion: "gini"
+
+  xgboost:
+    enabled: true
+    n_estimators: 200
+    max_depth: 5           # Shallower: imbalanced data → deeper trees overfit majority
+    learning_rate: 0.05    # Lower lr: more cautious with imbalanced distribution
+    subsample: 0.8
+    colsample_bytree: 0.7
+    n_jobs: -1
+
+  transformer:
+    enabled: true
+    model_name: "dbmdz/bert-base-turkish-cased"   # Pre-trained on Turkish Wikipedia + news
+    fine_tune_mode: "full"
+    learning_rate: 2.0e-5
+    batch_size: 32
+    epochs: 3
+    max_length: 128         # Short texts avg 140 chars (~35 tokens); 128 is more than enough
+    lora_r: 8
+    lora_alpha: 16
+    lora_dropout: 0.1
+    warmup_ratio: 0.1
+    weight_decay: 0.01
+
+output:
+  save_models: true
+  save_feature_extractor: true

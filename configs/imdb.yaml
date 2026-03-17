@@ -1,0 +1,87 @@
+experiment:
+  name: "imdb_all_models"
+  description: "IMDB sentiment classification - binary, balanced, 25K samples, long English texts"
+
+dataset:
+  name: "imdb"
+  train_path: "data/processed/imdb_train.csv"
+  test_path: "data/processed/imdb_test.csv"
+  sample_size: null  # 25K is manageable for all models
+
+feature_extraction:
+  method: "tfidf"
+  max_features: 50000    # Long texts → rich vocabulary, need more features
+  ngram_range: [1, 2]    # Unigrams + bigrams (e.g. "not good", "very bad")
+  min_df: 2              # At least 2 occurrences
+  max_df: 0.95           # Remove near-universal tokens
+  sublinear_tf: true     # log(1+tf) dampens high-frequency words
+  sparse: true           # Keep sparse for memory efficiency
+
+models:
+  naive_bayes:
+    enabled: true
+    alpha: 0.1
+    # Low alpha → less smoothing. Long reviews give rich freq signal;
+    # aggressive smoothing loses that signal.
+
+  svm:
+    enabled: true
+    C: 1.0
+    max_iter: 2000
+    # C=1.0: balanced regularization for binary problem.
+    # max_iter=2000: extra iterations for 50K-feature convergence.
+
+  random_forest:
+    enabled: true
+    n_estimators: 200
+    max_depth: null       # Unlimited depth; 25K samples handle overfitting naturally
+    min_samples_split: 5
+    n_jobs: -1
+
+  knn:
+    enabled: true
+    n_neighbors: 7
+    metric: "cosine"      # Cosine distance is best for TF-IDF vectors
+    weights: "distance"   # Closer neighbors vote harder
+    algorithm: "brute"    # Required for cosine with sparse matrix
+    n_jobs: -1
+
+  logistic_regression:
+    enabled: true
+    C: 1.0
+    max_iter: 1000
+    solver: "lbfgs"       # lbfgs is optimal for binary + sparse TF-IDF
+
+  decision_tree:
+    enabled: true
+    max_depth: 20
+    min_samples_split: 10
+    min_samples_leaf: 5
+    criterion: "gini"
+
+  xgboost:
+    enabled: true
+    n_estimators: 200
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    n_jobs: -1
+
+  transformer:
+    enabled: true
+    model_name: "distilbert-base-uncased"   # 66M params, 40% faster than BERT-base
+    fine_tune_mode: "full"                  # Full fine-tune: best accuracy for 25K
+    learning_rate: 2.0e-5
+    batch_size: 16
+    epochs: 3
+    max_length: 256        # Reviews avg 1325 chars (~330 tokens); 256 captures most signal
+    lora_r: 8
+    lora_alpha: 16
+    lora_dropout: 0.1
+    warmup_ratio: 0.1
+    weight_decay: 0.01
+
+output:
+  save_models: true
+  save_feature_extractor: true

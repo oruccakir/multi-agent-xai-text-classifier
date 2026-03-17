@@ -1,127 +1,199 @@
-# Multi-Agent Explainable AI Text Classification System
+# Multi-Agent Explainable AI Text Classification
 
-A multi-agent system for explainable text classification combining traditional ML and transformer models with LIME/SHAP interpretability.
+> **TOBB ETÜ BIL 476/573 — Data Mining Spring 2026**
+>
+> *Multi-Agent Explainable AI Text Classification: A Comparative Study of Classical Machine Learning and Transformer-Based Models with SHAP and LIME*
 
-## Project Overview
+---
 
-This project implements a multi-agent architecture for text classification with explainability:
+## Research Question
 
-### Three-Agent Architecture
+> *"Can a multi-agent architecture effectively route and classify multilingual text, and how do traditional machine learning classifiers compare to transformer-based deep learning models in terms of accuracy, F1-score, and interpretability when explained through SHAP and LIME?"*
 
-1. **Intent Classifier Agent** - Analyzes input text to determine context (movie review, product review, news) and routes to the appropriate model
-2. **Classification Agent** - Performs text classification using one of six methods
-3. **XAI Agent** - Explains predictions using LIME/SHAP analysis and LLM-generated natural language explanations
+---
 
-### Supported Classification Methods
+## System Architecture
 
-- Naive Bayes
-- Support Vector Machines (SVM)
-- Random Forest
-- K-Nearest Neighbors (KNN)
-- Logistic Regression
-- Transformer Models (BERT, DistilBERT)
+![Architecture](reports/data_mining/architecture.png)
 
-### Supported Datasets
+The system is built around three cooperating agents:
 
-| Dataset | Language | Task | Classes |
-|---------|----------|------|---------|
-| IMDB | English | Binary Sentiment | Positive/Negative |
-| Turkish Sentiment | Turkish | Binary Sentiment | Pozitif/Negatif |
-| AG News | English | Multi-class News | World, Sports, Business, Sci/Tech |
-| Turkish News | Turkish | Multi-class News | Spor, Ekonomi, Siyaset, Magazin, Teknoloji |
+| Agent | Role |
+|-------|------|
+| **Intent Classifier** | Detects language (EN/TR) and task type (sentiment vs. topic), routes input to the correct dataset-specific classifier |
+| **Classification Agent** | Runs inference with the selected model (one of 8 classifiers), returns the predicted label and confidence |
+| **XAI Agent** | Generates a SHAP or LIME explanation for the prediction on demand, formats it for display |
+
+---
+
+## Agent Workflow
+
+### Agent 1 — Intent Classifier (routing)
+![Agent 1](reports/data_mining/examples/agent1.png)
+
+### Agent 2 — Classification Agent (inference)
+![Agent 2](reports/data_mining/examples/agent2.png)
+
+### Agent 3 — XAI Agent (explanation)
+![Agent 3](reports/data_mining/examples/agent3.png)
+
+### End-to-end: classify a text
+![Classify](reports/data_mining/examples/classify.png)
+
+### TF-IDF feature inspection
+![TF features](reports/data_mining/examples/tf.png)
+
+---
+
+## Datasets
+
+| Dataset | Language | Task | Train | Test | Classes | Balance |
+|---------|----------|------|------:|-----:|:-------:|---------|
+| [IMDB](https://huggingface.co/datasets/stanfordnlp/imdb) | English | Sentiment | 25,000 | 25,000 | 2 | Balanced |
+| [AG News](https://huggingface.co/datasets/sh0416/ag_news) | English | Topic | 120,000 | 7,600 | 4 | Balanced |
+| [Turkish Sentiment](https://huggingface.co/datasets/winvoker/turkish-sentiment-analysis-dataset) | Turkish | Sentiment | 440,679 | 48,965 | 3 | **Imbalanced** |
+| [Turkish News (TTC4900)](https://huggingface.co/datasets/savasy/ttc4900) | Turkish | Topic | 3,920 | 980 | 7 | Balanced |
+
+---
+
+## Models
+
+8 classifiers compared on every dataset:
+
+| # | Model | Type |
+|---|-------|------|
+| 1 | DistilBERT / BERTurk | Transformer |
+| 2 | Support Vector Machine (SVM) | Classical |
+| 3 | Logistic Regression | Classical |
+| 4 | Naive Bayes | Classical |
+| 5 | Random Forest | Classical |
+| 6 | XGBoost | Classical |
+| 7 | K-Nearest Neighbors (KNN) | Classical |
+| 8 | Decision Tree | Classical |
+
+---
+
+## Results
+
+### Cross-Dataset Summary (F1-Macro / Macro AUC)
+
+| Model | IMDB F1 | IMDB AUC | AG News F1 | AG News AUC | Tr. Sent. F1 | Tr. Sent. AUC | Tr. News F1 | Tr. News AUC |
+|-------|--------:|---------:|-----------:|------------:|-------------:|--------------:|------------:|-------------:|
+| **Transformer** | **.907** | **.968** | **.928** | **.989** | **.930** | **.991** | **.938** | **.994** |
+| SVM | .895 | .961 | .915 | .982 | .877 | .975 | .919 | .993 |
+| Logistic Regression | .894 | .960 | .909 | .981 | .839 | .974 | .887 | .988 |
+| Naive Bayes | .864 | .938 | .904 | .979 | .849 | .967 | .899 | .993 |
+| Random Forest | .861 | .938 | .880 | .975 | .789 | .962 | .843 | .978 |
+| XGBoost | .857 | .936 | .873 | .969 | .755 | .926 | .834 | .976 |
+| KNN | .729 | .793 | .891 | .969 | .776 | .922 | .884 | .968 |
+| Decision Tree | .733 | .776 | .611 | .834 | .706 | .828 | .491 | .783 |
+
+**Key findings:**
+- Transformer is best on all four datasets; the gap over SVM ranges from **1.2 to 5.3 points**.
+- SVM is the best classical model everywhere — trains in 0.4–2.6 s while finishing within 1.9 pts of the transformer on 3/4 datasets.
+- Decision Tree collapses on multiclass tasks: 73.3% on binary IMDB → 49.1% on 7-class Turkish News (barely above random).
+- KNN performs surprisingly well on short-text balanced datasets (89.1% on AG News).
+- Class imbalance in Turkish Sentiment penalises all models; SVM loses 4.5 pp from Accuracy to F1-Macro, DT loses 8.7 pp.
+
+---
+
+### IMDB (Binary Sentiment — English)
+
+| | Overall | F1 Scores | ROC Curves | Confusion Matrices | Training Time |
+|--|:-------:|:---------:|:----------:|:-----------------:|:-------------:|
+| | ![](reports/data_mining/imdb/overall.png) | ![](reports/data_mining/imdb/f1_scores.png) | ![](reports/data_mining/imdb/roc_curves.png) | ![](reports/data_mining/imdb/confusion_matrixes.png) | ![](reports/data_mining/imdb/training_time.png) |
+
+---
+
+### AG News (4-class Topic — English)
+
+| | Overall | F1 Scores | ROC Curves | Confusion Matrices | Training Time |
+|--|:-------:|:---------:|:----------:|:-----------------:|:-------------:|
+| | ![](reports/data_mining/ag_news/overall.png) | ![](reports/data_mining/ag_news/f1_scores.png) | ![](reports/data_mining/ag_news/roc_curves.png) | ![](reports/data_mining/ag_news/confusion_matrixes.png) | ![](reports/data_mining/ag_news/training_time.png) |
+
+---
+
+### Turkish Sentiment (3-class, Imbalanced)
+
+| | Overall | F1 Scores | ROC Curves | Confusion Matrices | Training Time |
+|--|:-------:|:---------:|:----------:|:-----------------:|:-------------:|
+| | ![](reports/data_mining/turkish_sentiment/overall.png) | ![](reports/data_mining/turkish_sentiment/f1_curves.png) | ![](reports/data_mining/turkish_sentiment/roc_curves.png) | ![](reports/data_mining/turkish_sentiment/confusion_matrixes.png) | ![](reports/data_mining/turkish_sentiment/training_time.png) |
+
+---
+
+### Turkish News / TTC4900 (7-class Topic — Turkish)
+
+| | Overall | F1 Scores | ROC Curves | Confusion Matrices | Training Time |
+|--|:-------:|:---------:|:----------:|:-----------------:|:-------------:|
+| | ![](reports/data_mining/turkish_news/overall.png) | ![](reports/data_mining/turkish_news/f1_scores.png) | ![](reports/data_mining/turkish_news/roc_curves.png) | ![](reports/data_mining/turkish_news/confusion_matrixes.png) | ![](reports/data_mining/turkish_news/training_time.png) |
+
+---
+
+## Setup & Usage
+
+### 1. Create and activate the environment
+
+```bash
+conda env create -f environment.yml
+conda activate xai-classifier
+```
+
+### 2. Train models
+
+```bash
+python scripts/train_experiment.py --config configs/imdb.yaml
+python scripts/train_experiment.py --config configs/ag_news.yaml
+python scripts/train_experiment.py --config configs/turkish_sentiment.yaml
+python scripts/train_experiment.py --config configs/turkish_news.yaml
+```
+
+### 3. Launch the Streamlit app
+
+```bash
+streamlit run app/Home.py
+```
+
+The app includes six pages:
+
+| Page | Description |
+|------|-------------|
+| 📝 Classify Text | Single-text inference with SHAP/LIME explanation |
+| 📊 Batch Processing | Upload CSV, classify in bulk |
+| ⚖️ Model Comparison | Compare all 8 models side-by-side |
+| 📚 Dataset Explorer | Browse and filter dataset samples |
+| 📋 Experiment Details | View training metrics and plots |
+| 🎓 Train Models | Trigger training from the UI |
+
+---
 
 ## Project Structure
 
 ```
-multi-agent-xai-text-classifier/
+├── app/                   # Streamlit UI (Home.py + 6 pages)
+├── configs/               # YAML experiment configs per dataset
+├── data/                  # Raw and processed data
+├── notebooks/             # Exploratory analysis
+├── reports/
+│   └── data_mining/       # IEEE paper (sample_report.tex/.pdf)
+│       ├── imdb/          # IMDB result plots
+│       ├── ag_news/       # AG News result plots
+│       ├── turkish_sentiment/
+│       ├── turkish_news/
+│       └── examples/      # App screenshots
+├── scripts/               # Training and evaluation scripts
 ├── src/
-│   ├── agents/                 # Multi-agent components
-│   │   ├── base_agent.py
-│   │   ├── intent_classifier.py
-│   │   ├── classification_agent.py
-│   │   └── xai_agent.py
-│   ├── models/                 # Classification models
-│   │   ├── naive_bayes.py
-│   │   ├── svm.py
-│   │   ├── random_forest.py
-│   │   ├── knn.py
-│   │   ├── logistic_regression.py
-│   │   └── transformer.py
-│   ├── preprocessing/          # Text preprocessing
-│   │   ├── text_preprocessor.py
-│   │   └── feature_extractor.py
-│   ├── explainability/         # XAI modules
-│   │   ├── lime_explainer.py
-│   │   ├── shap_explainer.py
-│   │   └── llm_explainer.py
-│   ├── data/                   # Data loading
-│   │   └── data_loader.py
-│   ├── utils/                  # Utilities
-│   │   └── config.py
-│   └── pipeline.py             # Main pipeline
-├── data/
-│   ├── raw/                    # Raw datasets
-│   ├── processed/              # Processed data
-│   └── models/                 # Trained models
-├── configs/                    # Configuration files
-├── notebooks/                  # Jupyter notebooks
-├── tests/                      # Unit tests
-├── reports/                    # Project reports
-├── main.py                     # Entry point
-├── requirements.txt
-└── setup.py
+│   ├── agents/            # intent_classifier, classification_agent, xai_agent
+│   ├── data/              # Dataset loaders
+│   ├── explainability/    # SHAP & LIME wrappers
+│   ├── models/            # Model definitions
+│   ├── preprocessing/     # Text cleaning & TF-IDF pipeline
+│   └── pipeline.py        # End-to-end pipeline
+├── environment.yml
+└── main.py
 ```
 
-## Installation
+---
 
-```bash
-# Clone the repository
-git clone <repository-url>
-cd multi-agent-xai-text-classifier
+## Report
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or
-venv\Scripts\activate     # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install package in development mode
-pip install -e .
-```
-
-## Usage
-
-### Training
-
-```bash
-python main.py --mode train --dataset imdb --model naive_bayes
-```
-
-### Evaluation
-
-```bash
-python main.py --mode evaluate --dataset imdb
-```
-
-### Prediction
-
-```bash
-python main.py --mode predict --text "This movie was fantastic!"
-```
-
-## Tech Stack
-
-- **Python 3.9+**
-- **scikit-learn** - Traditional ML models
-- **transformers** - Transformer models
-- **sentence-transformers** - Sentence embeddings
-- **LIME** - Local interpretable explanations
-- **SHAP** - Shapley value explanations
-- **LangChain** - LLM integration
-
-## License
-
-MIT License
+The full IEEE-format paper is at [`reports/data_mining/sample_report.tex`](reports/data_mining/sample_report.tex).

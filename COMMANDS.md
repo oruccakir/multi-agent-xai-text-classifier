@@ -12,3 +12,9 @@ conda activate xai-classifier
 ```bash
 streamlit run app/Home.py
 ```
+
+
+ python scripts/train_experiment.py --config configs/imdb.yaml                                                                                  
+ python scripts/train_experiment.py --config configs/ag_news.yaml                                                                                 
+ python scripts/train_experiment.py --config configs/turkish_sentiment.yaml                                                                       
+ python scripts/train_experiment.py --config configs/turkish_news.yaml   

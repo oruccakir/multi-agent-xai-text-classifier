@@ -424,7 +424,7 @@ def main():
         st.markdown("### 🎯 Intent Detection")
 
         if intent_gemini:
-            st.success("🤖 Powered by Google Gemini")
+            st.success("🤖 Powered by an LLM model")
         else:
             st.warning("⚠️ Using fallback keyword-based detection")
 
