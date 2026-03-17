@@ -49,12 +49,12 @@
 	of Classical Machine Learning and Transformer-Based Models with SHAP and LIME\\
 }
 
-\author{\IEEEauthorblockN{\lbrack Student Name\rbrack}
+\author{\IEEEauthorblockN{Oruç Çakır}
 	\IEEEauthorblockA{\textit{Department of Computer Engineering}\\
 		\textit{TOBB University of Economics and Technology}\\
 		Ankara, Turkey \\
-		Student ID: \lbrack Student ID\rbrack \\
-		student@etu.edu.tr}
+		Student ID: 211101023 \\
+		oruccakir@etu.edu.tr}
 }
 
 \maketitle
@@ -1142,11 +1142,10 @@ The main findings are:
         datasets, but the margin over SVM is only 1.2--1.9 points on three of them. The
         gap is largest on Turkish Sentiment (5.3 points) due to class imbalance, where the
         transformer is more robust to the minority class.
-  \item \textbf{(RQ part 2)} The system integrates both SHAP (\texttt{shap.Explainer})
-        and LIME (\texttt{LimeTextExplainer}) via a unified, model-agnostic interface that
-        works for all eight models. On-demand explanations are generated through the
-        Streamlit interface; a systematic comparison of explanation quality across model
-        families is left for future work.
+  \item \textbf{(RQ part 2)} The system integrates both SHAP and LIME via a unified,
+        model-agnostic interface that works for all eight models. On-demand explanations
+        are generated through the Streamlit interface; a systematic comparison of
+        explanation quality across model families is left for future work.
   \item \textbf{(RQ part 3)} The multi-agent architecture successfully routes multilingual
         text and generates on-demand explanations for all eight models. The modular design
         makes it easy to swap or update individual components.
@@ -1179,7 +1178,6 @@ see how well it transfers. Finally, the research question could be extended to m
 classification scenarios, where a text can belong to more than one category at the same time.
 
 % ============================================================
-\clearpage
 \begin{thebibliography}{00}
 
 \bibitem{b1}
