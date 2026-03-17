@@ -220,6 +220,13 @@ Finally, the Turkish News dataset~\cite{b_trnews} (\texttt{savasy/ttc4900}, also
 TTC4900) contains full news articles from Turkish news websites, labeled with seven different
 topic categories.
 
+Although the raw datasets each contain only two columns (text and label), TF-IDF
+vectorization expands the feature space to 20{,}000--50{,}000 dimensions depending on the
+dataset vocabulary, effectively treating each unique n-gram as a distinct attribute for
+classical models. For the transformer model, the input is represented as sequences of
+sub-word token embeddings (768-dimensional hidden states), providing a rich, high-dimensional
+attribute space that captures contextual semantics beyond surface n-gram statistics.
+
 \subsection{Data Characteristics}
 
 Table~\ref{tab:dataset_summary} gives a summary of all four datasets. They are quite
@@ -1089,6 +1096,34 @@ improvement. Third, transformer models were trained for only 3--5 epochs due to 
 limits. Fourth, SHAP and LIME analysis is qualitative at this stage; a systematic
 comparison of explanation stability across models is left for future work.
 
+\textbf{Ethical implications.} Bias and fairness concerns arise in several places in this
+work. The Turkish Sentiment dataset consists of product and social media reviews, which
+may over-represent users who are younger, urban, or digitally active, potentially
+under-serving other demographic groups. More concretely, the severe class imbalance in that
+dataset (negative class at only 3.3\%) means that models optimised for accuracy will
+systematically underserve the minority class --- a fairness issue that persists regardless
+of which algorithm is chosen. In deployment, misclassification consequences are
+application-dependent: a false-negative in a hate-speech filter has different stakes than a
+mislabelled product review, so the choice of decision threshold should be guided by a
+domain-specific cost analysis rather than by macro-accuracy alone. Finally, the use of SHAP
+and LIME in this project directly addresses transparency concerns: in high-stakes domains
+(content moderation, hiring tools, financial services), providing per-prediction explanations
+is essential for auditing and contesting automated decisions. All datasets used here are
+publicly released for research and contain no personally identifiable information, which
+mitigates, but does not eliminate, potential harms from model deployment.
+
+\textbf{Novelty and publication potential.} This project combines several elements that are
+not commonly studied together: a multilingual dataset pair (English and Turkish), eight
+classifiers spanning classical and transformer-based approaches, and two XAI methods (SHAP
+and LIME) integrated into a multi-agent routing architecture. While each component
+individually exists in the literature, their combination in a single comparative study is
+relatively uncommon, particularly for Turkish. That said, the work is primarily an
+applied, course-level project rather than a research contribution targeting publication.
+The main limitations that would need to be addressed before any submission are the absence
+of a quantitative evaluation of explanation faithfulness, the limited hyperparameter search,
+and the small scale of some experiments. These are acknowledged as directions for future
+work rather than shortcomings of the current scope.
+
 % ============================================================
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
@@ -1120,6 +1155,21 @@ The most practical takeaway is that SVM with TF-IDF is an excellent baseline: it
 in under 3 seconds, ranks second on every dataset, and produces interpretable explanations.
 Transformers are only clearly worth the extra training cost when working with highly
 imbalanced data or when the accuracy gap matters for the application.
+
+\textbf{Lessons learned.} Several lessons emerged that are transferable beyond this
+specific project. First, class imbalance should be addressed at the data level (oversampling
+or class-weighted loss) rather than accepted as a fixed constraint; handling it after
+training through threshold tuning is less effective and can mask the problem in aggregate
+metrics. Second, SVM with TF-IDF generalises surprisingly well across languages and domains
+with minimal tuning --- its robustness to vocabulary shift makes it a better default than
+more complex ensembles for low-resource scenarios. Third, Turkish morphology proved less of
+a barrier than anticipated: character-level n-grams (bigrams and trigrams) effectively
+capture Turkish suffixes without a dedicated morphological analyser, suggesting that
+n-gram tokenisation is a practical first approach for agglutinative languages. Fourth,
+Decision Tree accuracy collapses on long-text datasets not because of a bug but because of
+a fundamental capacity mismatch between axis-aligned splits and high-dimensional TF-IDF
+space, reinforcing the importance of matching model inductive biases to the feature
+representation.
 
 For future work, there are several directions I would like to explore. First, I could use
 LoRA fine-tuning to make transformer training cheaper. Second, I could try data augmentation
@@ -1225,5 +1275,23 @@ Hugging Face Datasets, 2022.
 [Online]. Available: \url{https://huggingface.co/datasets/savasy/ttc4900}
 
 \end{thebibliography}
+
+% ============================================================
+\appendix
+\section{Code Repository}
+\label{appendix:code}
+% ============================================================
+
+The full source code, dataset configuration files, experiment scripts, and pre-trained model
+weights for this project are available at:
+
+\begin{center}
+  \url{[URL omitted for blind review]}
+\end{center}
+
+The repository is organised as follows: \texttt{src/} contains the data-loading, training,
+and evaluation pipeline; \texttt{agents/} contains the three-agent routing logic;
+\texttt{app/} contains the Streamlit interface; and \texttt{reports/} contains this
+document and all generated figures.
 
 \end{document}
