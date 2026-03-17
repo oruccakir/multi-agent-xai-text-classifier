@@ -14,7 +14,7 @@
 
 ## System Architecture
 
-![Architecture](reports/data_mining/architecture.png)
+![Architecture](reports/pattern_recognition/architecture.png)
 
 The system is built around three cooperating agents:
 
@@ -29,19 +29,19 @@ The system is built around three cooperating agents:
 ## Agent Workflow
 
 ### Agent 1 — Intent Classifier (routing)
-![Agent 1](reports/data_mining/examples/agent1.png)
+![Agent 1](reports/pattern_recognition/examples/agent1.png)
 
 ### Agent 2 — Classification Agent (inference)
-![Agent 2](reports/data_mining/examples/agent2.png)
+![Agent 2](reports/pattern_recognition/examples/agent2.png)
 
 ### Agent 3 — XAI Agent (explanation)
-![Agent 3](reports/data_mining/examples/agent3.png)
+![Agent 3](reports/pattern_recognition/examples/agent3.png)
 
 ### End-to-end: classify a text
-![Classify](reports/data_mining/examples/classify.png)
+![Classify](reports/pattern_recognition/examples/classify.png)
 
 ### TF-IDF feature inspection
-![TF features](reports/data_mining/examples/tf.png)
+![TF features](reports/pattern_recognition/examples/tf.png)
 
 ---
 
@@ -101,7 +101,7 @@ The system is built around three cooperating agents:
 
 | | Overall | F1 Scores | ROC Curves | Confusion Matrices | Training Time |
 |--|:-------:|:---------:|:----------:|:-----------------:|:-------------:|
-| | ![](reports/data_mining/imdb/overall.png) | ![](reports/data_mining/imdb/f1_scores.png) | ![](reports/data_mining/imdb/roc_curves.png) | ![](reports/data_mining/imdb/confusion_matrixes.png) | ![](reports/data_mining/imdb/training_time.png) |
+| | ![](reports/pattern_recognition/imdb/overall.png) | ![](reports/pattern_recognition/imdb/f1_scores.png) | ![](reports/pattern_recognition/imdb/roc_curves.png) | ![](reports/pattern_recognition/imdb/confusion_matrixes.png) | ![](reports/pattern_recognition/imdb/training_time.png) |
 
 ---
 
@@ -109,7 +109,7 @@ The system is built around three cooperating agents:
 
 | | Overall | F1 Scores | ROC Curves | Confusion Matrices | Training Time |
 |--|:-------:|:---------:|:----------:|:-----------------:|:-------------:|
-| | ![](reports/data_mining/ag_news/overall.png) | ![](reports/data_mining/ag_news/f1_scores.png) | ![](reports/data_mining/ag_news/roc_curves.png) | ![](reports/data_mining/ag_news/confusion_matrixes.png) | ![](reports/data_mining/ag_news/training_time.png) |
+| | ![](reports/pattern_recognition/ag_news/overall.png) | ![](reports/pattern_recognition/ag_news/f1_scores.png) | ![](reports/pattern_recognition/ag_news/roc_curves.png) | ![](reports/pattern_recognition/ag_news/confusion_matrixes.png) | ![](reports/pattern_recognition/ag_news/training_time.png) |
 
 ---
 
@@ -117,7 +117,7 @@ The system is built around three cooperating agents:
 
 | | Overall | F1 Scores | ROC Curves | Confusion Matrices | Training Time |
 |--|:-------:|:---------:|:----------:|:-----------------:|:-------------:|
-| | ![](reports/data_mining/turkish_sentiment/overall.png) | ![](reports/data_mining/turkish_sentiment/f1_curves.png) | ![](reports/data_mining/turkish_sentiment/roc_curves.png) | ![](reports/data_mining/turkish_sentiment/confusion_matrixes.png) | ![](reports/data_mining/turkish_sentiment/training_time.png) |
+| | ![](reports/pattern_recognition/turkish_sentiment/overall.png) | ![](reports/pattern_recognition/turkish_sentiment/f1_curves.png) | ![](reports/pattern_recognition/turkish_sentiment/roc_curves.png) | ![](reports/pattern_recognition/turkish_sentiment/confusion_matrixes.png) | ![](reports/pattern_recognition/turkish_sentiment/training_time.png) |
 
 ---
 
@@ -125,7 +125,7 @@ The system is built around three cooperating agents:
 
 | | Overall | F1 Scores | ROC Curves | Confusion Matrices | Training Time |
 |--|:-------:|:---------:|:----------:|:-----------------:|:-------------:|
-| | ![](reports/data_mining/turkish_news/overall.png) | ![](reports/data_mining/turkish_news/f1_scores.png) | ![](reports/data_mining/turkish_news/roc_curves.png) | ![](reports/data_mining/turkish_news/confusion_matrixes.png) | ![](reports/data_mining/turkish_news/training_time.png) |
+| | ![](reports/pattern_recognition/turkish_news/overall.png) | ![](reports/pattern_recognition/turkish_news/f1_scores.png) | ![](reports/pattern_recognition/turkish_news/roc_curves.png) | ![](reports/pattern_recognition/turkish_news/confusion_matrixes.png) | ![](reports/pattern_recognition/turkish_news/training_time.png) |
 
 ---
 

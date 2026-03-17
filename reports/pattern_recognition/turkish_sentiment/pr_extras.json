@@ -1,0 +1,39 @@
+{
+  "pozitif": [
+    "harika",
+    "mükemmel",
+    "güzel",
+    "ederim",
+    "memnunum",
+    "gayet",
+    "1010",
+    "iyi",
+    "teşekkürler",
+    "şık"
+  ],
+  "notr": [
+    "vardır",
+    "olmuştur",
+    "tarafından",
+    "bulunur",
+    "bulunmaktadır",
+    "değildir",
+    "sahiptir",
+    "almıştır",
+    "aldı",
+    "genellikle"
+  ],
+  "negatif": [
+    "berbat",
+    "etmiyorum",
+    "beğenmedim",
+    "kötü",
+    "sıkıcı",
+    "iade",
+    "rezalet",
+    "en kötü",
+    "yazık",
+    "kalitesiz"
+  ],
+  "ari": -0.017105834166813577
+}
