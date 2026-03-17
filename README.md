@@ -174,7 +174,7 @@ The app includes six pages:
 ├── data/                  # Raw and processed data
 ├── notebooks/             # Exploratory analysis
 ├── reports/
-│   └── data_mining/       # IEEE paper (sample_report.tex/.pdf)
+│   └── pattern_recognition/       # IEEE paper (sample_report.tex/.pdf)
 │       ├── imdb/          # IMDB result plots
 │       ├── ag_news/       # AG News result plots
 │       ├── turkish_sentiment/
@@ -196,4 +196,4 @@ The app includes six pages:
 
 ## Report
 
-The full IEEE-format paper is at [`reports/data_mining/sample_report.tex`](reports/data_mining/sample_report.tex).
+The full IEEE-format paper is at [`reports/pattern_recognition/sample_report.tex`](reports/pattern_recognition/sample_report.tex).
