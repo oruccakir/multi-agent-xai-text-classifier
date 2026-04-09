@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Agent XAI Text Classification — Demo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;800;900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a0a0f;
+  --bg-card: #12121a;
+  --bg-elevated: #1a1a26;
+  --accent: #f97316;
+  --accent-dim: #c2410c;
+  --teal: #14b8a6;
+  --violet: #a78bfa;
+  --rose: #fb7185;
+  --text-primary: #f1f5f9;
+  --text-muted: #94a3b8;
+  --border: #1e293b;
+}
+
+.reveal {
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+}
+
+.reveal .slides { text-align: left; }
+
+.reveal .slides section {
+  padding: 30px 50px;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.reveal h1, .reveal h2, .reveal h3 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+
+.reveal h1 { font-size: 2.4em; }
+.reveal h2 { font-size: 1.6em; margin-bottom: 0.4em; }
+.reveal h3 { font-size: 1.15em; color: var(--accent); font-weight: 600; }
+
+.reveal p, .reveal li {
+  font-weight: 300;
+  font-size: 0.7em;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.reveal strong { color: var(--text-primary); font-weight: 600; }
+.reveal em { font-family: 'Instrument Serif', serif; font-style: italic; color: var(--accent); }
+
+.reveal code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+  background: var(--bg-elevated);
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--teal);
+}
+
+.reveal pre {
+  width: 100%;
+  box-shadow: none;
+  font-size: 0.52em;
+}
+.reveal pre code {
+  font-family: 'JetBrains Mono', monospace;
+  padding: 20px 24px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  max-height: 340px;
+  line-height: 1.5;
+}
+
+/* --- Title slide --- */
+.title-slide {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  position: relative;
+}
+.title-slide::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at 60% 40%, rgba(249,115,22,0.08) 0%, transparent 60%),
+              radial-gradient(ellipse at 30% 70%, rgba(20,184,166,0.06) 0%, transparent 50%);
+  pointer-events: none;
+}
+.title-slide h1 { font-size: 1.9em; margin-bottom: 0.15em; position: relative; }
+.title-slide .subtitle {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 1.1em;
+  color: var(--accent);
+  margin-bottom: 1.5em;
+}
+.title-slide .meta {
+  font-size: 0.7em;
+  color: var(--text-muted);
+  font-weight: 300;
+}
+.title-slide .meta strong { color: var(--text-primary); }
+
+/* --- Tag / pill --- */
+.tag {
+  display: inline-block;
+  font-size: 0.55em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 6px 16px;
+  border-radius: 100px;
+  background: rgba(249,115,22,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(249,115,22,0.25);
+  margin-bottom: 16px;
+}
+
+/* --- Metric cards --- */
+.metrics-row {
+  display: flex;
+  gap: 16px;
+  margin: 20px 0;
+}
+.metric-card {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+}
+.metric-card .value {
+  font-size: 1.7em;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.metric-card .label {
+  font-size: 0.6em;
+  color: var(--text-muted);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.metric-card.accent .value { color: var(--accent); }
+.metric-card.teal .value { color: var(--teal); }
+.metric-card.violet .value { color: var(--violet); }
+.metric-card.rose .value { color: var(--rose); }
+
+/* --- Data table --- */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.65em;
+  margin: 16px 0;
+}
+.data-table th {
+  text-align: left;
+  padding: 7px 12px;
+  background: var(--bg-elevated);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 2px solid var(--accent-dim);
+}
+.data-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.data-table tr:hover td { background: rgba(249,115,22,0.04); }
+.data-table .best { color: var(--accent); font-weight: 700; }
+
+/* --- Agent flow diagram (CSS-only) --- */
+.agent-flow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+}
+.agent-box {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  position: relative;
+}
+.agent-box .agent-num {
+  font-size: 0.55em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+.agent-box h4 {
+  font-size: 0.85em;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--text-primary);
+}
+.agent-box p {
+  font-size: 0.6em !important;
+  margin: 0;
+  line-height: 1.4;
+}
+.agent-box.a1 { border-top: 3px solid var(--accent); }
+.agent-box.a1 .agent-num { color: var(--accent); }
+.agent-box.a2 { border-top: 3px solid var(--teal); }
+.agent-box.a2 .agent-num { color: var(--teal); }
+.agent-box.a3 { border-top: 3px solid var(--violet); }
+.agent-box.a3 .agent-num { color: var(--violet); }
+
+.arrow-right {
+  font-size: 1.4em;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* --- Split layout --- */
+.split {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+.split > * { flex: 1; }
+.split-60-40 > :first-child { flex: 3; }
+.split-60-40 > :last-child { flex: 2; }
+
+/* --- Image container --- */
+.fig {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+.fig img {
+  width: 100%;
+  display: block;
+  max-height: 380px;
+  object-fit: contain;
+}
+.fig-caption {
+  font-size: 0.5em;
+  color: var(--text-muted);
+  padding: 8px 14px;
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+
+/* --- Pipeline steps --- */
+.steps {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+}
+.step {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  font-size: 0.58em;
+  color: var(--text-muted);
+  position: relative;
+}
+.step .step-num {
+  font-weight: 800;
+  font-size: 1.3em;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* --- Highlight box --- */
+.highlight-box {
+  background: linear-gradient(135deg, rgba(249,115,22,0.08), rgba(20,184,166,0.06));
+  border: 1px solid rgba(249,115,22,0.2);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin: 16px 0;
+}
+.highlight-box p { color: var(--text-primary) !important; font-size: 0.75em !important; font-weight: 400; }
+
+/* --- List styling --- */
+.reveal ul { list-style: none; padding: 0; margin: 10px 0; }
+.reveal ul li {
+  padding: 4px 0 4px 24px;
+  position: relative;
+}
+.reveal ul li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* --- Section divider --- */
+.section-divider {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.section-divider .section-number {
+  font-size: 5em;
+  font-weight: 900;
+  color: var(--accent);
+  opacity: 0.15;
+  line-height: 1;
+  margin-bottom: -20px;
+}
+.section-divider h2 { text-align: center; }
+
+/* --- Demo slide --- */
+.demo-banner {
+  background: linear-gradient(135deg, var(--accent-dim), var(--accent));
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  margin: 24px 0;
+}
+.demo-banner h3 {
+  color: white !important;
+  font-size: 1.6em;
+  margin: 0 0 8px;
+}
+.demo-banner p {
+  color: rgba(255,255,255,0.85) !important;
+  font-size: 0.8em !important;
+}
+
+/* Responsive images */
+.reveal img { max-width: 100%; }
+
+/* progress bar */
+.reveal .progress { color: var(--accent); height: 4px; }
+.reveal .controls button { color: var(--accent) !important; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ============ SLIDE 1: TITLE ============ -->
+<section class="title-slide" data-background-color="#0a0a0f">
+  <div class="tag">BIL 443 / 564 &mdash; Dönem Projesi</div>
+  <h1>Çoklu Ajan Destekli<br>Açıklanabilir YZ<br>Metin Sınıflandırma</h1>
+  <div class="subtitle">Multi-Agent Explainable AI Text Classification</div>
+  <div class="meta">
+    <strong>Oruç Çakır</strong> &nbsp;·&nbsp; 211101023<br>
+    TOBB Ekonomi ve Teknoloji Üniversitesi &nbsp;·&nbsp; 2025–26 Bahar
+  </div>
+</section>
+
+<!-- ============ SLIDE 2: PROBLEM ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Problem</div>
+  <h2>Neden Bu Proje?</h2>
+  <div class="split">
+    <div>
+      <ul>
+        <li><strong>Kara kutu modeller</strong> yüksek doğruluk sağlıyor ama kararlarını açıklayamıyor</li>
+        <li>Farklı <strong>diller</strong> (TR/EN) ve <strong>görevler</strong> (sentiment/haber) için hangi model en iyi?</li>
+        <li>Kullanıcılar modelin <strong>neden</strong> o kararı verdiğini anlamak istiyor</li>
+      </ul>
+      <div class="highlight-box">
+        <p><em>Araştırma Sorusu:</em> Çoklu ajan mimarisi metin sınıflandırmayı etkin şekilde yönlendirebilir mi ve klasik sınıflandırıcılar transformer tabanlı modellere karşı nasıl performans gösterir?</p>
+      </div>
+    </div>
+    <div>
+      <div class="metric-card accent" style="margin-bottom:12px;">
+        <div class="value">4</div>
+        <div class="label">Veri Seti (2 Dil)</div>
+      </div>
+      <div class="metric-card teal" style="margin-bottom:12px;">
+        <div class="value">8</div>
+        <div class="label">Sınıflandırma Modeli</div>
+      </div>
+      <div class="metric-card violet">
+        <div class="value">3</div>
+        <div class="label">XAI Yöntemi</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 3: ARCHITECTURE ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Mimari</div>
+  <h2>3 Ajanlı Pipeline</h2>
+  <div class="agent-flow">
+    <div class="agent-box a1">
+      <div class="agent-num">Ajan 1</div>
+      <h4>Niyet Sınıflandırıcı</h4>
+      <p>Dil tespiti (TR/EN)<br>Domain tespiti (sentiment/haber)<br>Veri seti önerisi<br><strong>Gemini LLM + Fallback</strong></p>
+    </div>
+    <div class="arrow-right">→</div>
+    <div class="agent-box a2">
+      <div class="agent-num">Ajan 2</div>
+      <h4>Sınıflandırma</h4>
+      <p>TF-IDF öznitelik çıkarımı<br>8 model desteği<br>Tahmin + güven skoru<br><strong>Sklearn + HuggingFace</strong></p>
+    </div>
+    <div class="arrow-right">→</div>
+    <div class="agent-box a3">
+      <div class="agent-num">Ajan 3</div>
+      <h4>Açıklanabilirlik</h4>
+      <p>LIME analizi<br>SHAP analizi<br>LLM doğal dil açıklama<br><strong>Model-agnostik</strong></p>
+    </div>
+  </div>
+  <pre><code class="python">class TextClassificationPipeline:
+    def __init__(self):
+        self.intent_agent = IntentClassifierAgent()     # Ajan 1
+        self.classification_agent = ClassificationAgent() # Ajan 2
+        self.xai_agent = XAIAgent()                      # Ajan 3
+
+    def process(self, text, explain=True):
+        intent = self.intent_agent.process(text)           # Dil + Domain
+        result = self.classification_agent.process(intent)  # Tahmin
+        explanation = self.xai_agent.process(result)         # Açıklama
+        return {intent, result, explanation}</code></pre>
+</section>
+
+<!-- ============ SLIDE 4: DATASETS ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Veri Setleri</div>
+  <h2>4 Benchmark Veri Seti</h2>
+  <table class="data-table">
+    <thead>
+      <tr><th>Veri Seti</th><th>Dil</th><th>Görev</th><th>Sınıf</th><th>Eğitim</th><th>Test</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>IMDB</strong></td><td>İngilizce</td><td>Binary Sentiment</td><td>2</td><td>25,000</td><td>25,000</td></tr>
+      <tr><td><strong>AG News</strong></td><td>İngilizce</td><td>Haber Sınıflandırma</td><td>4</td><td>50,000</td><td>7,600</td></tr>
+      <tr style="background:rgba(249,115,22,0.06);"><td><strong style="color:var(--accent);">Turkish Sentiment ★</strong></td><td>Türkçe</td><td>Multiclass Sentiment</td><td>3</td><td>440,679</td><td>48,965</td></tr>
+      <tr><td><strong>TTC4900</strong></td><td>Türkçe</td><td>Haber Sınıflandırma</td><td>7</td><td>~3,920</td><td>~980</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight-box">
+    <p><strong>Odak: Turkish Sentiment</strong> — 440K kısa metin, 3 sınıf (<em>pozitif</em> %53.5, <em>nötr</em> %34.9, <em>negatif</em> %11.6). Ciddi sınıf dengesizliği → Macro-F1 birincil metrik.</p>
+  </div>
+</section>
+
+<!-- ============ SLIDE 5: METHODOLOGY ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Metodoloji</div>
+  <h2>Ön İşleme &amp; Öznitelik Çıkarımı</h2>
+  <div class="steps">
+    <div class="step"><span class="step-num">1</span>URL temizleme</div>
+    <div class="step"><span class="step-num">2</span>Küçük harf</div>
+    <div class="step"><span class="step-num">3</span>Noktalama (TR korumalı)</div>
+    <div class="step"><span class="step-num">4</span>Stopword filtreleme</div>
+    <div class="step"><span class="step-num">5</span>Min. uzunluk (≥2)</div>
+  </div>
+  <div class="split">
+    <div>
+      <h3>TF-IDF Vektörizasyon</h3>
+      <ul>
+        <li><strong>30,000</strong> boyutlu sparse vektör</li>
+        <li>Unigram + Bigram (1,2)</li>
+        <li>Sublinear TF + <strong>L2 normalizasyon</strong></li>
+        <li>min_df=3, max_df=0.95</li>
+      </ul>
+      <h3>Türkçe Morfoloji</h3>
+      <ul>
+        <li>Agglutinative yapı: <em>gel, geldi, gelmedi, gelmeyecekti</em></li>
+        <li>Bigram ile dolaylı morfolojik kapsam</li>
+      </ul>
+    </div>
+    <div>
+      <div class="fig">
+        <img src="turkish_sentiment/tsne_2d.png" alt="t-SNE">
+        <div class="fig-caption">t-SNE: 2,000 test örneği, PCA-50 → 2D</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 6: FEATURE ANALYSIS ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Öznitelik Analizi</div>
+  <h2>Korelasyon &amp; Kümeleme</h2>
+  <div class="split">
+    <div>
+      <div class="fig">
+        <img src="turkish_sentiment/feature_correlation.png" alt="Feature Correlation">
+        <div class="fig-caption">Pearson korelasyon matrisi — Top-15 SVM feature</div>
+      </div>
+    </div>
+    <div>
+      <div class="fig">
+        <img src="turkish_sentiment/kmeans_clusters.png" alt="K-Means">
+        <div class="fig-caption">K-Means (k=3) vs. gerçek etiketler — ARI = −0.017</div>
+      </div>
+      <div class="highlight-box" style="margin-top:12px;">
+        <p>TF-IDF uzayında sentiment sınıfları geometrik olarak <strong>ayrılamıyor</strong> → Supervised sınıflandırıcılar gerekli</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 7: COVARIANCE MATRIX ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Öznitelik Analizi</div>
+  <h2>Kovaryans Matrisi</h2>
+  <div class="split">
+    <div class="fig" style="flex:2;">
+      <img src="turkish_sentiment/covariance_matrix.png" alt="Covariance Matrix">
+      <div class="fig-caption">Kovaryans matrisi — Top-5 SVM feature (sınıf başına, 15 toplam)</div>
+    </div>
+    <div style="flex:1;">
+      <h3>Bulgular</h3>
+      <ul>
+        <li>Çoğu feature çifti <strong>kovaryans ≈ 0</strong></li>
+        <li>TF-IDF sparse → features quasi-bağımsız</li>
+        <li>L2 normalizasyon varyansı sıkıştırıyor</li>
+        <li>SVM bu bağımsızlıktan faydalanıyor</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 8: CLASS DISTRIBUTION + TOP FEATURES ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Veri Analizi</div>
+  <h2>Sınıf Dağılımı &amp; Ayırt Edici Kelimeler</h2>
+  <div class="split">
+    <div>
+      <h3>Sınıf Dağılımı (Eğitim)</h3>
+      <table class="data-table">
+        <thead>
+          <tr><th>Sınıf</th><th>Sayı</th><th>Oran</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Pozitif</td><td>226,896</td><td>%51.5</td></tr>
+          <tr><td>Notr</td><td>162,562</td><td>%36.9</td></tr>
+          <tr><td style="color:var(--rose);">Negatif</td><td style="color:var(--rose);">51,047</td><td style="color:var(--rose);">%11.6</td></tr>
+        </tbody>
+      </table>
+      <div class="highlight-box" style="margin-top:12px;">
+        <p><strong>1:3.2:4.4 dengesizlik</strong> → Macro-F1 kritik metrik, Accuracy yanıltıcı</p>
+      </div>
+    </div>
+    <div>
+      <h3>Top-10 SVM Kelimeler</h3>
+      <table class="data-table" style="font-size:0.6em;">
+        <thead>
+          <tr><th>Pozitif</th><th>Notr</th><th>Negatif</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>harika</td><td>vardır</td><td>berbat</td></tr>
+          <tr><td>mükemmel</td><td>olmuştur</td><td>etmiyorum</td></tr>
+          <tr><td>güzel</td><td>tarafından</td><td>beğenmedim</td></tr>
+          <tr><td>ederim</td><td>bulunur</td><td>kötü</td></tr>
+          <tr><td>memnunum</td><td>bulunmaktadır</td><td>sıkıcı</td></tr>
+          <tr><td>gayet</td><td>değildir</td><td>iade</td></tr>
+          <tr><td>1010</td><td>sahiptir</td><td>rezalet</td></tr>
+          <tr><td>iyi</td><td>almıştır</td><td>en kötü</td></tr>
+          <tr><td>teşekkürler</td><td>aldı</td><td>yazık</td></tr>
+          <tr><td>şık</td><td>genellikle</td><td>kalitesiz</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 9: CODE WALKTHROUGH ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Kod</div>
+  <h2>Kritik Kod Yapısı</h2>
+  <div class="split">
+    <div>
+      <pre><code class="python"># src/agents/intent_classifier.py
+class IntentResult(BaseModel):
+    language: Language    # english / turkish
+    domain: Domain        # sentiment / news
+    dataset: Dataset      # imdb / ag_news / ...
+    confidence: float
+    reasoning: str
+
+class IntentClassifierAgent(BaseAgent):
+    """Gemini LLM ile dil + domain tespiti,
+       statik kural tabanlı fallback."""
+    def process(self, text):
+        # 1. Gemini ile analiz (JSON output)
+        # 2. Fallback: Türkçe karakter kontrolü
+        #    + keyword matching
+        return IntentResult(...)</code></pre>
+    </div>
+    <div>
+      <pre><code class="python"># scripts/train_experiment.py
+# Config-driven eğitim pipeline
+
+config = load_yaml("configs/turkish_sentiment.yaml")
+
+# Her dataset için ayrı YAML config:
+#   - TF-IDF parametreleri
+#   - Model hiperparametreleri
+#   - Eğitim/test ayarları
+
+for model_name in config['models']:
+    model = create_model(model_name)
+    model.fit(X_train_tfidf, y_train)
+    metrics = model.evaluate(X_test_tfidf, y_test)
+    save_results(metrics)  # JSON format</code></pre>
+    </div>
+  </div>
+  <p style="font-size:0.6em; margin-top:8px;"><strong>Proje yapısı:</strong> <code>src/agents/</code> (3 ajan) · <code>src/models/</code> (8 model) · <code>src/preprocessing/</code> · <code>configs/</code> (YAML) · <code>app/</code> (Streamlit 7 sayfa)</p>
+</section>
+
+<!-- ============ SLIDE 8: RESULTS ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Sonuçlar</div>
+  <h2>Model Karşılaştırma</h2>
+  <div class="split-60-40 split">
+    <div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Model</th><th>Accuracy</th><th>Macro-F1</th><th>ROC-AUC</th></tr>
+        </thead>
+        <tbody>
+          <tr class="best"><td><strong>Transformer (BERTurk)</strong></td><td class="best">0.9574</td><td class="best">0.9298</td><td class="best">0.9909</td></tr>
+          <tr><td><strong>SVM</strong></td><td>0.9223</td><td>0.8768</td><td>0.9748</td></tr>
+          <tr><td>Naive Bayes</td><td>0.9062</td><td>0.8488</td><td>0.9670</td></tr>
+          <tr><td>Logistic Reg.</td><td>0.9048</td><td>0.8387</td><td>0.9735</td></tr>
+          <tr><td>Random Forest</td><td>0.8863</td><td>0.7893</td><td>0.9625</td></tr>
+          <tr><td>KNN</td><td>0.8622</td><td>0.7757</td><td>0.9217</td></tr>
+          <tr><td>XGBoost</td><td>0.8369</td><td>0.7554</td><td>0.9257</td></tr>
+          <tr><td>Decision Tree</td><td>0.7935</td><td>0.7063</td><td>0.8282</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="metrics-row" style="flex-direction:column; gap:10px;">
+        <div class="metric-card accent">
+          <div class="value">0.930</div>
+          <div class="label">BERTurk F1</div>
+        </div>
+        <div class="metric-card teal">
+          <div class="value">0.877</div>
+          <div class="label">SVM F1 (En İyi Klasik)</div>
+        </div>
+        <div class="metric-card rose">
+          <div class="value">5.3 puan</div>
+          <div class="label">Transformer–SVM Farkı</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 10: CONFUSION + ROC ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Sonuçlar</div>
+  <h2>Confusion Matrix &amp; ROC</h2>
+  <div class="split">
+    <div class="fig">
+      <img src="turkish_sentiment/confusion_matrixes.png" alt="Confusion Matrices">
+      <div class="fig-caption">8 modelin confusion matrix'leri (n=10,000)</div>
+    </div>
+    <div class="fig">
+      <img src="turkish_sentiment/roc_curves.png" alt="ROC Curves">
+      <div class="fig-caption">ROC eğrileri (sınıf bazlı AUC)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 11: NEGATIF CLASS + OVERALL ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Sonuçlar</div>
+  <h2>Negatif Sınıf Analizi &amp; Genel Karşılaştırma</h2>
+  <div class="split">
+    <div>
+      <h3>Negatif Sınıf: TP / FN / FP / TN</h3>
+      <table class="data-table" style="font-size:0.6em;">
+        <thead>
+          <tr><th>Model</th><th>TP</th><th>FN</th><th>FP</th><th>TN</th></tr>
+        </thead>
+        <tbody>
+          <tr class="best"><td><strong>Transformer</strong></td><td class="best">945</td><td>214</td><td>151</td><td>8690</td></tr>
+          <tr><td><strong>SVM</strong></td><td>757</td><td>402</td><td>132</td><td>8709</td></tr>
+          <tr><td>Naive Bayes</td><td>675</td><td>484</td><td>168</td><td>8673</td></tr>
+          <tr><td>Logistic Reg.</td><td>596</td><td>563</td><td>70</td><td>8771</td></tr>
+          <tr><td>Random Forest</td><td>435</td><td>724</td><td>72</td><td>8769</td></tr>
+          <tr><td>KNN</td><td>477</td><td>682</td><td>132</td><td>8709</td></tr>
+          <tr><td>XGBoost</td><td>465</td><td>694</td><td>105</td><td>8736</td></tr>
+          <tr><td>Decision Tree</td><td>433</td><td>726</td><td>267</td><td>8574</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:0.55em; margin-top:6px;">Transformer recall: <strong>81.5%</strong>, SVM: <strong>65.3%</strong>, DT: <strong>37.4%</strong></p>
+    </div>
+    <div>
+      <div class="fig">
+        <img src="turkish_sentiment/overall.png" alt="Overall Comparison">
+        <div class="fig-caption">Accuracy, Macro-F1, Precision, Recall karşılaştırması</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 12: STATISTICAL ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">İstatistik</div>
+  <h2>10-Run İstatistiksel Analiz</h2>
+  <div class="split">
+    <div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Model</th><th>Ort. F1</th><th>Std</th><th>p-value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>SVM</strong></td><td><strong>0.8214</strong></td><td>0.0057</td><td>—</td></tr>
+          <tr><td>Naive Bayes</td><td>0.8058</td><td>0.0070</td><td>&lt;0.0001</td></tr>
+          <tr><td>Logistic Reg.</td><td>0.7733</td><td>0.0083</td><td>&lt;0.0001</td></tr>
+          <tr><td>XGBoost</td><td>0.7539</td><td>0.0106</td><td>&lt;0.0001</td></tr>
+          <tr><td>KNN</td><td>0.7413</td><td>0.0083</td><td>&lt;0.0001</td></tr>
+          <tr><td>Random Forest</td><td>0.7360</td><td>0.0097</td><td>&lt;0.0001</td></tr>
+          <tr><td>Decision Tree</td><td>0.6751</td><td>0.0115</td><td>&lt;0.0001</td></tr>
+        </tbody>
+      </table>
+      <div class="highlight-box" style="margin-top:12px;">
+        <p>Tüm <strong>p &lt; 0.0001</strong> → SVM, 7 klasik modelin hepsini <em>istatistiksel olarak anlamlı</em> şekilde yeniyor</p>
+      </div>
+    </div>
+    <div>
+      <h3>SVM Neden En İyi?</h3>
+      <ul>
+        <li><strong>Maximum-margin</strong> yaklaşımı sparse TF-IDF'e uygun</li>
+        <li>30K boyutlu uzayda <strong>lineer ayrılabilirlik</strong> iyi</li>
+        <li><strong>L2 normalizasyon</strong> margin'ı stabilize ediyor</li>
+        <li>Feature bağımsızlığı varsaymıyor (NB'den farklı)</li>
+      </ul>
+      <h3 style="margin-top:16px;">Negatif Sınıf Problemi</h3>
+      <ul>
+        <li>Negatif: sadece <strong>%11.6</strong> eğitim verisi</li>
+        <li>Transformer recall: %81.5</li>
+        <li>SVM recall: %65.3</li>
+        <li>Decision Tree recall: %37.4</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 12: CROSS-DATASET ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Çapraz Analiz</div>
+  <h2>Tüm Veri Setlerinde Sonuçlar</h2>
+  <table class="data-table">
+    <thead>
+      <tr><th>Veri Seti</th><th>Görev</th><th>En İyi Klasik</th><th>F1-M</th><th>Transformer F1-M</th><th>Fark</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>IMDB</strong></td><td>Binary Sentiment</td><td>SVM</td><td>0.895</td><td class="best">0.907</td><td>1.2 puan</td></tr>
+      <tr><td><strong>AG News</strong></td><td>4-class Haber</td><td>SVM</td><td>0.915</td><td class="best">0.928</td><td>1.3 puan</td></tr>
+      <tr style="background:rgba(249,115,22,0.06);"><td><strong style="color:var(--accent);">Turkish Sentiment</strong></td><td>3-class Sentiment</td><td>SVM</td><td>0.877</td><td class="best">0.930</td><td><strong style="color:var(--rose);">5.3 puan</strong></td></tr>
+      <tr><td><strong>Turkish News</strong></td><td>7-class Haber</td><td>SVM</td><td>0.919</td><td class="best">0.938</td><td>1.9 puan</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight-box" style="margin-top:20px;">
+    <p><strong>Temel bulgu:</strong> Sınıf dengesizliği transformer avantajını <em>büyütüyor</em> (dengeli: 1.2–1.9 puan → dengesiz: 5.3 puan). SVM tüm veri setlerinde en iyi klasik model.</p>
+  </div>
+</section>
+
+<!-- ============ SLIDE 13: CONCLUSIONS ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Sonuç</div>
+  <h2>Öğrenilenler &amp; Gelecek</h2>
+  <div class="split">
+    <div>
+      <h3>Temel Bulgular</h3>
+      <ul>
+        <li>Sparse TF-IDF uzayında <strong>SVM</strong> en iyi klasik model</li>
+        <li><strong>BERTurk</strong> tüm veri setlerinde birinci</li>
+        <li>Sınıf dengesizliği → Macro-F1 kritik</li>
+        <li>K-Means ARI = −0.017 → kümeleme yetersiz, supervised gerekli</li>
+        <li>3 ajanlı modüler mimari farklı görevlere esneklik sağlıyor</li>
+      </ul>
+      <h3 style="margin-top:16px;">Limitasyonlar</h3>
+      <ul>
+        <li>SMOTE / class-weighted loss uygulanmadı</li>
+        <li>Hiperparametre optimizasyonu (grid search) yapılmadı</li>
+        <li>XAI sadakat metrikleri değerlendirilmedi</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Gelecek Çalışmalar</h3>
+      <ul>
+        <li><strong>SMOTE</strong> veya class-weighted LinearSVC ile negatif recall iyileştirme</li>
+        <li>SVM C parametresi ve TF-IDF vocabulary <strong>grid search</strong></li>
+        <li>XAI sadakat değerlendirmesi (sufficiency, comprehensiveness)</li>
+        <li>Daha fazla Türkçe veri seti ile genelleme testi</li>
+      </ul>
+      <div class="metric-card accent" style="margin-top:24px;">
+        <div class="value" style="font-size:1.2em;">github.com/oruccakir/multi-agent-xai-text-classifier</div>
+        <div class="label">Proje Deposu</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 13: LIVE DEMO ============ -->
+<section data-background-color="#0a0a0f">
+  <div class="tag">Canlı Demo</div>
+  <h2>Streamlit Arayüzü</h2>
+  <div class="demo-banner">
+    <h3>🖥️ Canlı Demo Zamanı</h3>
+    <p>Streamlit uygulamasına geçiş yapılacak</p>
+  </div>
+  <div class="split" style="margin-top:16px;">
+    <div>
+      <h3>Demo Senaryosu</h3>
+      <ul>
+        <li><strong>Türkçe metin:</strong> "Bu ürün gerçekten harika, kesinlikle tavsiye ederim"</li>
+        <li>Ajan 1 → Dil: Türkçe, Domain: Sentiment</li>
+        <li>Ajan 2 → Tahmin: POZİTİF (%87 güven)</li>
+        <li>Ajan 3 → LIME + SHAP + LLM açıklama</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Gösterilecekler</h3>
+      <ul>
+        <li>Metin Sınıflandırma sayfası</li>
+        <li>Model Karşılaştırma sayfası</li>
+        <li>Veri Seti Gezgini</li>
+        <li>LIME/SHAP görselleştirmeleri</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 14: THANK YOU ============ -->
+<section class="title-slide" data-background-color="#0a0a0f">
+  <h1 style="font-size:2.6em;">Teşekkürler</h1>
+  <div class="subtitle">Sorularınız?</div>
+  <div class="meta">
+    <strong>Oruç Çakır</strong> &nbsp;·&nbsp; oruccakir@etu.edu.tr<br>
+    BIL 443/564 &nbsp;·&nbsp; TOBB ETÜ &nbsp;·&nbsp; 2026
+  </div>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  slideNumber: 'c/t',
+  width: 1280,
+  height: 720,
+  margin: 0.04,
+  minScale: 0.2,
+  maxScale: 1.5,
+  transition: 'fade',
+  transitionSpeed: 'fast',
+  backgroundTransition: 'none',
+  scrollActivationWidth: null,
+  plugins: [ RevealHighlight ],
+  highlight: { highlightOnLoad: true }
+});
+</script>
+</body>
+</html>
