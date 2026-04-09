@@ -186,4 +186,124 @@ with open(f'{OUT_DIR}/pr_extras.json', 'w') as f:
     json.dump(features_data, f, ensure_ascii=False, indent=2)
 print(f"\nSaved features data and ARI to pr_extras.json")
 
-print("\nAll Phase 1a/1b/1c figures generated successfully!")
+# --- 2a. Feature-Feature Correlation Heatmap (Top 15 SVM features) ---
+print("\nGenerating feature correlation heatmap...")
+import seaborn as sns
+
+# Collect top-5 features per class (15 total unique)
+top_feat_names = []
+for cls in class_order:
+    for feat_name, _ in top_features[cls][:5]:
+        if feat_name not in top_feat_names:
+            top_feat_names.append(feat_name)
+
+# Get indices of these features in the vocabulary
+feat_indices = [vocab.index(f) for f in top_feat_names if f in vocab]
+feat_labels = [f for f in top_feat_names if f in vocab]
+
+# Extract sub-matrix from TF-IDF (using 2000-sample data)
+X_sub = X_tfidf[:, feat_indices].toarray()
+
+# Compute correlation matrix
+corr_matrix = np.corrcoef(X_sub.T)
+
+fig, ax = plt.subplots(figsize=(10, 8))
+sns.heatmap(corr_matrix, xticklabels=feat_labels, yticklabels=feat_labels,
+            cmap='RdBu_r', center=0, vmin=-0.3, vmax=0.3,
+            annot=True, fmt='.2f', annot_kws={'size': 7},
+            square=True, ax=ax)
+ax.set_title('Feature-Feature Correlation Matrix\n(Top-5 SVM Features per Class)', fontsize=12)
+plt.xticks(rotation=45, ha='right', fontsize=8)
+plt.yticks(fontsize=8)
+plt.tight_layout()
+plt.savefig(f'{OUT_DIR}/feature_correlation.png', dpi=150, bbox_inches='tight')
+plt.close()
+print(f"Saved feature_correlation.png ({len(feat_labels)} features)")
+
+# --- 2b. Covariance Matrix (Top 15 features) ---
+print("Generating covariance matrix...")
+cov_matrix = np.cov(X_sub.T)
+
+fig, ax = plt.subplots(figsize=(10, 8))
+sns.heatmap(cov_matrix, xticklabels=feat_labels, yticklabels=feat_labels,
+            cmap='YlOrRd', annot=True, fmt='.4f', annot_kws={'size': 7},
+            square=True, ax=ax)
+ax.set_title('Covariance Matrix\n(Top-5 SVM Features per Class)', fontsize=12)
+plt.xticks(rotation=45, ha='right', fontsize=8)
+plt.yticks(fontsize=8)
+plt.tight_layout()
+plt.savefig(f'{OUT_DIR}/covariance_matrix.png', dpi=150, bbox_inches='tight')
+plt.close()
+print(f"Saved covariance_matrix.png")
+
+# --- 2c. Feature-Target Correlation (Chi-squared) ---
+print("Computing feature-target correlations (chi-squared)...")
+from sklearn.feature_selection import chi2
+
+# Use full 2000-sample TF-IDF
+chi2_scores, chi2_pvals = chi2(X_tfidf, y_sample_int)
+
+# Get top-20 features by chi2
+top20_chi2_idx = np.argsort(chi2_scores)[-20:][::-1]
+top20_chi2_names = [vocab[i] for i in top20_chi2_idx]
+top20_chi2_scores = chi2_scores[top20_chi2_idx]
+
+fig, ax = plt.subplots(figsize=(10, 6))
+bars = ax.barh(range(len(top20_chi2_names)), top20_chi2_scores[::-1], color='steelblue')
+ax.set_yticks(range(len(top20_chi2_names)))
+ax.set_yticklabels(top20_chi2_names[::-1], fontsize=9)
+ax.set_xlabel('Chi-squared Score', fontsize=11)
+ax.set_title('Top-20 Features by Chi-squared (Feature-Target Association)', fontsize=12)
+ax.grid(True, alpha=0.3, axis='x')
+plt.tight_layout()
+plt.savefig(f'{OUT_DIR}/chi2_feature_target.png', dpi=150, bbox_inches='tight')
+plt.close()
+print(f"Saved chi2_feature_target.png")
+
+# --- 2d. Class Distribution Statistics ---
+print("Computing class distribution statistics...")
+# Per-class TF-IDF vector magnitude and document length stats
+class_stats = {}
+for cls_name, cls_int in [('negatif', 0), ('notr', 1), ('pozitif', 2)]:
+    mask = y_sample_int == cls_int
+    X_cls = X_tfidf[mask]
+    # L2 norms (should be ~1.0 due to L2 normalization)
+    norms = np.sqrt(np.array(X_cls.power(2).sum(axis=1)).flatten())
+    # Non-zero features per document (sparsity)
+    nnz_per_doc = np.array(X_cls.getnnz(axis=1)).flatten()
+    # Mean TF-IDF value of non-zero entries
+    mean_tfidf = np.array(X_cls.sum(axis=1)).flatten() / np.maximum(nnz_per_doc, 1)
+
+    class_stats[cls_name] = {
+        'count': int(mask.sum()),
+        'mean_nnz_features': float(np.mean(nnz_per_doc)),
+        'std_nnz_features': float(np.std(nnz_per_doc)),
+        'mean_l2_norm': float(np.mean(norms)),
+        'mean_tfidf_value': float(np.mean(mean_tfidf)),
+        'std_tfidf_value': float(np.std(mean_tfidf)),
+    }
+    print(f"  {cls_name}: n={mask.sum()}, mean_nnz={np.mean(nnz_per_doc):.1f}±{np.std(nnz_per_doc):.1f}, "
+          f"mean_tfidf={np.mean(mean_tfidf):.4f}±{np.std(mean_tfidf):.4f}")
+
+# Also compute document length stats from raw text
+doc_len_stats = {}
+for cls_name in ['negatif', 'notr', 'pozitif']:
+    mask = y_sample == cls_name
+    lengths = np.array([len(t.split()) for t in X_sample_texts[mask]])
+    doc_len_stats[cls_name] = {
+        'mean_words': float(np.mean(lengths)),
+        'std_words': float(np.std(lengths)),
+        'median_words': float(np.median(lengths)),
+    }
+    print(f"  {cls_name} doc length: mean={np.mean(lengths):.1f}±{np.std(lengths):.1f} words")
+
+# Save all extra stats
+features_data['class_stats'] = class_stats
+features_data['doc_len_stats'] = doc_len_stats
+features_data['top20_chi2'] = list(zip(top20_chi2_names, [float(s) for s in top20_chi2_scores]))
+
+with open(f'{OUT_DIR}/pr_extras.json', 'w') as f:
+    json.dump(features_data, f, ensure_ascii=False, indent=2)
+print(f"\nUpdated pr_extras.json with correlation and distribution data")
+
+print("\nAll figures generated successfully!")

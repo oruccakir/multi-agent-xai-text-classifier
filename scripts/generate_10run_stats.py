@@ -12,9 +12,12 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.preprocessing import LabelEncoder
 from scipy import stats
 import json
 
@@ -35,7 +38,10 @@ print(f"Subsample shape: {sub_df.shape}")
 print(f"Label distribution:\n{sub_df['label'].value_counts()}")
 
 X_all = sub_df['text'].values
-y_all = sub_df['label'].values
+y_all_str = sub_df['label'].values
+le = LabelEncoder()
+le.fit(y_all_str)
+y_all = le.transform(y_all_str)
 
 # TF-IDF config matching original
 tfidf_params = {
@@ -54,10 +60,15 @@ def make_models():
         'LogisticReg': LogisticRegression(C=0.5, solver='saga', max_iter=1000, random_state=0),
         'RandomForest': RandomForestClassifier(n_estimators=100, random_state=0, n_jobs=-1),
         'KNN': KNeighborsClassifier(n_neighbors=5, metric='cosine', n_jobs=-1),
+        'DecisionTree': DecisionTreeClassifier(max_depth=20, criterion='gini', random_state=0),
+        'XGBoost': XGBClassifier(n_estimators=200, max_depth=5, learning_rate=0.05,
+                                  subsample=0.8, colsample_bytree=0.8,
+                                  random_state=0, eval_metric='mlogloss',
+                                  verbosity=0),
     }
 
 n_runs = 10
-results = {name: [] for name in ['NaiveBayes', 'SVM', 'LogisticReg', 'RandomForest', 'KNN']}
+results = {name: [] for name in ['NaiveBayes', 'SVM', 'LogisticReg', 'RandomForest', 'KNN', 'DecisionTree', 'XGBoost']}
 
 for seed in range(n_runs):
     print(f"Run {seed+1}/{n_runs}...")

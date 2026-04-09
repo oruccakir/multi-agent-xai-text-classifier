@@ -35,5 +35,130 @@
     "yazık",
     "kalitesiz"
   ],
-  "ari": -0.017105834166813577
+  "ari": -0.017105834166813577,
+  "class_stats": {
+    "negatif": {
+      "count": 231,
+      "mean_nnz_features": 25.4978354978355,
+      "std_nnz_features": 28.633355425691523,
+      "mean_l2_norm": 1.0,
+      "mean_tfidf_value": 0.2866601744572286,
+      "std_tfidf_value": 0.1721319601032721
+    },
+    "notr": {
+      "count": 698,
+      "mean_nnz_features": 5.343839541547278,
+      "std_nnz_features": 2.6347573492523617,
+      "mean_l2_norm": 0.995702005730659,
+      "mean_tfidf_value": 0.4675125435589247,
+      "std_tfidf_value": 0.14768722801543277
+    },
+    "pozitif": {
+      "count": 1070,
+      "mean_nnz_features": 18.589719626168225,
+      "std_nnz_features": 13.835376804527574,
+      "mean_l2_norm": 0.9981308411214953,
+      "mean_tfidf_value": 0.2776705395680281,
+      "std_tfidf_value": 0.13734687320625089
+    }
+  },
+  "doc_len_stats": {
+    "negatif": {
+      "mean_words": 31.82251082251082,
+      "std_words": 39.8293830356827,
+      "median_words": 18.0
+    },
+    "notr": {
+      "mean_words": 6.43839541547278,
+      "std_words": 2.4010059385597193,
+      "median_words": 6.0
+    },
+    "pozitif": {
+      "mean_words": 18.726168224299066,
+      "std_words": 16.01531881416552,
+      "median_words": 16.0
+    }
+  },
+  "top20_chi2": [
+    [
+      "hızlı güvenilir",
+      NaN
+    ],
+    [
+      "hızlı güvenli",
+      NaN
+    ],
+    [
+      "hızlı güzel",
+      NaN
+    ],
+    [
+      "hızlı hem",
+      NaN
+    ],
+    [
+      "hızlı iyi",
+      NaN
+    ],
+    [
+      "hızlı kaliteli",
+      NaN
+    ],
+    [
+      "hızlı kargolama",
+      NaN
+    ],
+    [
+      "hızlı kargolandı",
+      NaN
+    ],
+    [
+      "hızlı oldu",
+      NaN
+    ],
+    [
+      "hızlı sağlam",
+      NaN
+    ],
+    [
+      "meraklısı",
+      NaN
+    ],
+    [
+      "hızlı seri",
+      NaN
+    ],
+    [
+      "hızlı sorunsuz",
+      NaN
+    ],
+    [
+      "hızlı tavsiye",
+      NaN
+    ],
+    [
+      "hızlı telefon",
+      NaN
+    ],
+    [
+      "hızlı uygun",
+      NaN
+    ],
+    [
+      "hızlı çalışıyor",
+      NaN
+    ],
+    [
+      "hızlı özenli",
+      NaN
+    ],
+    [
+      "hızlı ürün",
+      NaN
+    ],
+    [
+      "hızlı ısınıyor",
+      NaN
+    ]
+  ]
 }

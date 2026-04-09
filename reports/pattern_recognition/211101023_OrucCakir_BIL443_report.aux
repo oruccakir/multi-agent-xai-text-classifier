@@ -20,6 +20,7 @@
 \citation{b7}
 \citation{b_wj}
 \citation{b_trsentiment}
+\citation{b_tfidf}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Deep Learning and Pre-trained Language Models}{2}{subsection.2.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Explainable AI for NLP}{2}{subsection.2.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-D}}Turkish NLP}{2}{subsection.2.4}\protected@file@percent }
@@ -35,6 +36,7 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Feature Descriptions}{2}{subsection.4.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}Feature Selection and Adjustment}{2}{subsection.4.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-F}}Other Problem-Specific Processing}{2}{subsection.4.6}\protected@file@percent }
+\citation{b_tsne}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-G}}Class Data Distribution}{3}{subsection.4.7}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Turkish Sentiment Class Distribution (Training Set)}}{3}{table.1}\protected@file@percent }
 \newlabel{tab:class_dist}{{I}{3}{Turkish Sentiment Class Distribution (Training Set)}{table.1}{}}
@@ -43,35 +45,42 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-J}}Relationships Between Features}{3}{subsection.4.10}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces t-SNE 2D projection of 2,000 test samples (PCA-50 + t-SNE). Partial class separation is visible, with negatif (red) forming a loose cluster away from pozitif (blue) but overlapping with notr (green).}}{3}{figure.2}\protected@file@percent }
 \newlabel{fig:tsne}{{2}{3}{t-SNE 2D projection of 2,000 test samples (PCA-50 + t-SNE). Partial class separation is visible, with negatif (red) forming a loose cluster away from pozitif (blue) but overlapping with notr (green)}{figure.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Top-10 Discriminative TF-IDF Features per Class (SVM coef\_)}}{3}{table.2}\protected@file@percent }
-\newlabel{tab:top_features}{{II}{3}{Top-10 Discriminative TF-IDF Features per Class (SVM coef\_)}{table.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-K}}Data Clustering}{3}{subsection.4.11}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {V}Models Used}{3}{section.5}\protected@file@percent }
-\newlabel{sec:models}{{V}{3}{Models Used}{section.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Train/Validation/Test Split}{3}{subsection.5.1}\protected@file@percent }
-\citation{b7}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces PCA-2D: true labels (left) vs.\ K-Means ($k=3$) clusters (right) on 2,000 test samples. ARI$=-0.017$ shows that sentiment classes do not form geometrically separable clusters in TF-IDF PCA space.}}{4}{figure.3}\protected@file@percent }
-\newlabel{fig:kmeans}{{3}{4}{PCA-2D: true labels (left) vs.\ K-Means ($k=3$) clusters (right) on 2,000 test samples. ARI$=-0.017$ shows that sentiment classes do not form geometrically separable clusters in TF-IDF PCA space}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Covariance matrix of the top-5 SVM features per class (15 features). Near-diagonal structure confirms low feature co-variance in sparse TF-IDF space.}}{4}{figure.3}\protected@file@percent }
+\newlabel{fig:cov}{{3}{4}{Covariance matrix of the top-5 SVM features per class (15 features). Near-diagonal structure confirms low feature co-variance in sparse TF-IDF space}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Pearson correlation matrix of the top-5 SVM discriminative features per class (15 features). Near-zero off-diagonal values confirm feature independence in the sparse TF-IDF space.}}{4}{figure.4}\protected@file@percent }
+\newlabel{fig:corr}{{4}{4}{Pearson correlation matrix of the top-5 SVM discriminative features per class (15 features). Near-zero off-diagonal values confirm feature independence in the sparse TF-IDF space}{figure.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Models Used}{4}{section.5}\protected@file@percent }
+\newlabel{sec:models}{{V}{4}{Models Used}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Train/Validation/Test Split}{4}{subsection.5.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Top-10 Discriminative TF-IDF Features per Class (SVM coef\_)}}{4}{table.2}\protected@file@percent }
+\newlabel{tab:top_features}{{II}{4}{Top-10 Discriminative TF-IDF Features per Class (SVM coef\_)}{table.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces PCA-2D: true labels (left) vs.\ K-Means ($k=3$) clusters (right) on 2,000 test samples. ARI$=-0.017$ shows that sentiment classes do not form geometrically separable clusters in TF-IDF PCA space.}}{4}{figure.5}\protected@file@percent }
+\newlabel{fig:kmeans}{{5}{4}{PCA-2D: true labels (left) vs.\ K-Means ($k=3$) clusters (right) on 2,000 test samples. ARI$=-0.017$ shows that sentiment classes do not form geometrically separable clusters in TF-IDF PCA space}{figure.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Classical Pattern Classifiers}{4}{subsection.5.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Transformer Classifier (BERTurk)}{4}{subsection.5.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {VI}Results}{4}{section.6}\protected@file@percent }
-\newlabel{sec:results}{{VI}{4}{Results}{section.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Evaluation Metrics}{4}{subsection.6.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Confusion Matrices and Negatif Class Analysis}{4}{subsection.6.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Negatif Class: TP, FN, FP, TN (test set, $n=10{,}000$)}}{4}{table.3}\protected@file@percent }
-\newlabel{tab:negatif_tp}{{III}{4}{Negatif Class: TP, FN, FP, TN (test set, $n=10{,}000$)}{table.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Model Comparison}{4}{subsection.6.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Confusion matrices for all 8 models on the Turkish Sentiment test set ($n=10{,}000$). Rows = true class, columns = predicted class. Classes: negatif (0), notr (1), pozitif (2). The negatif class (top row) shows the most misclassification across all models.}}{5}{figure.4}\protected@file@percent }
-\newlabel{fig:cms}{{4}{5}{Confusion matrices for all 8 models on the Turkish Sentiment test set ($n=10{,}000$). Rows = true class, columns = predicted class. Classes: negatif (0), notr (1), pozitif (2). The negatif class (top row) shows the most misclassification across all models}{figure.4}{}}
+\citation{b_xgboost}
+\citation{b7}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Transformer Classifier (BERTurk)}{5}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Results}{5}{section.6}\protected@file@percent }
+\newlabel{sec:results}{{VI}{5}{Results}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Evaluation Metrics}{5}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Confusion Matrices and Negatif Class Analysis}{5}{subsection.6.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Negatif Class: TP, FN, FP, TN (test set, $n=10{,}000$)}}{5}{table.3}\protected@file@percent }
+\newlabel{tab:negatif_tp}{{III}{5}{Negatif Class: TP, FN, FP, TN (test set, $n=10{,}000$)}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Model Comparison}{5}{subsection.6.3}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Turkish Sentiment Classification Results ($n=10{,}000$ test)}}{5}{table.4}\protected@file@percent }
 \newlabel{tab:results}{{IV}{5}{Turkish Sentiment Classification Results ($n=10{,}000$ test)}{table.4}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-D}}Statistical Significance (10-Run Experiment)}{5}{subsection.6.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces 10-Run Macro-F1: Mean $\pm $ Std and t-test vs.\ SVM}}{5}{table.5}\protected@file@percent }
-\newlabel{tab:ttest}{{V}{5}{10-Run Macro-F1: Mean $\pm $ Std and t-test vs.\ SVM}{table.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Turkish Sentiment: Model performance comparison across Accuracy, Macro-F1, Precision, and Recall. The gap between Accuracy and Macro-F1 is largest for Random Forest (8.7 points) and smallest for Transformer (2.8 points).}}{6}{figure.5}\protected@file@percent }
-\newlabel{fig:overall}{{5}{6}{Turkish Sentiment: Model performance comparison across Accuracy, Macro-F1, Precision, and Recall. The gap between Accuracy and Macro-F1 is largest for Random Forest (8.7 points) and smallest for Transformer (2.8 points)}{figure.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Turkish Sentiment: ROC-AUC curves (one-vs-rest per class). Transformer macro AUC=0.991; SVM macro AUC=0.975. The negatif class (dashed lines) shows consistently lower AUC than notr and pozitif across all models.}}{6}{figure.6}\protected@file@percent }
-\newlabel{fig:roc}{{6}{6}{Turkish Sentiment: ROC-AUC curves (one-vs-rest per class). Transformer macro AUC=0.991; SVM macro AUC=0.975. The negatif class (dashed lines) shows consistently lower AUC than notr and pozitif across all models}{figure.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Confusion matrices for all 8 models on the Turkish Sentiment test set ($n=10{,}000$). Rows = true class, columns = predicted class. Classes: negatif (0), notr (1), pozitif (2). The negatif class (top row) shows the most misclassification across all models.}}{6}{figure.6}\protected@file@percent }
+\newlabel{fig:cms}{{6}{6}{Confusion matrices for all 8 models on the Turkish Sentiment test set ($n=10{,}000$). Rows = true class, columns = predicted class. Classes: negatif (0), notr (1), pozitif (2). The negatif class (top row) shows the most misclassification across all models}{figure.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Turkish Sentiment: Model performance comparison across Accuracy, Macro-F1, Precision, and Recall. The gap between Accuracy and Macro-F1 is largest for Random Forest (8.7 points) and smallest for Transformer (2.8 points).}}{6}{figure.7}\protected@file@percent }
+\newlabel{fig:overall}{{7}{6}{Turkish Sentiment: Model performance comparison across Accuracy, Macro-F1, Precision, and Recall. The gap between Accuracy and Macro-F1 is largest for Random Forest (8.7 points) and smallest for Transformer (2.8 points)}{figure.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Turkish Sentiment: ROC-AUC curves (one-vs-rest per class). Transformer macro AUC=0.991; SVM macro AUC=0.975. The negatif class (dashed lines) shows consistently lower AUC than notr and pozitif across all models.}}{7}{figure.8}\protected@file@percent }
+\newlabel{fig:roc}{{8}{7}{Turkish Sentiment: ROC-AUC curves (one-vs-rest per class). Transformer macro AUC=0.991; SVM macro AUC=0.975. The negatif class (dashed lines) shows consistently lower AUC than notr and pozitif across all models}{figure.8}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces 10-Run Macro-F1: Mean $\pm $ Std and t-test vs.\ SVM}}{7}{table.5}\protected@file@percent }
+\newlabel{tab:ttest}{{V}{7}{10-Run Macro-F1: Mean $\pm $ Std and t-test vs.\ SVM}{table.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclusions}{7}{section.7}\protected@file@percent }
+\newlabel{sec:conclusion}{{VII}{7}{Conclusions}{section.7}{}}
 \bibcite{b_duda}{1}
 \bibcite{b2}{2}
 \bibcite{b4}{3}
@@ -83,12 +92,13 @@
 \bibcite{b_imdb}{9}
 \bibcite{b_agnews}{10}
 \bibcite{b_trnews}{11}
-\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclusions}{7}{section.7}\protected@file@percent }
-\newlabel{sec:conclusion}{{VII}{7}{Conclusions}{section.7}{}}
-\@writefile{toc}{\contentsline {section}{References}{7}{section*.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{Appendix}{7}{section*.2}\protected@file@percent }
-\newlabel{appendix:code}{{A}{7}{\appendixname }{section*.2}{}}
-\newlabel{appendix:datasets}{{A}{7}{\appendixname }{section*.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces Additional Datasets: Best Classical Model and Transformer Macro-F1}}{7}{table.6}\protected@file@percent }
-\newlabel{tab:appendix_summary}{{VI}{7}{Additional Datasets: Best Classical Model and Transformer Macro-F1}{table.6}{}}
-\gdef \@abspage@last{7}
+\bibcite{b_xgboost}{12}
+\bibcite{b_tsne}{13}
+\bibcite{b_tfidf}{14}
+\@writefile{toc}{\contentsline {section}{References}{8}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{Appendix}{8}{section*.2}\protected@file@percent }
+\newlabel{appendix:code}{{A}{8}{\appendixname }{section*.2}{}}
+\newlabel{appendix:datasets}{{A}{8}{\appendixname }{section*.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces Additional Datasets: Best Classical Model and Transformer Macro-F1}}{8}{table.6}\protected@file@percent }
+\newlabel{tab:appendix_summary}{{VI}{8}{Additional Datasets: Best Classical Model and Transformer Macro-F1}{table.6}{}}
+\gdef \@abspage@last{8}

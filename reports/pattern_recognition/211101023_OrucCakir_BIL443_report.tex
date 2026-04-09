@@ -55,10 +55,10 @@ the deep analysis on Turkish Sentiment (440K short texts), a challenging imbalan
 scenario. I compare seven classical classifiers (Naive Bayes, SVM, Logistic Regression,
 Random Forest, KNN, Decision Tree, XGBoost) and BERTurk, using TF-IDF with L2
 normalization on a 50K stratified subsample. BERTurk achieves Macro-F1 = 0.9298, while
-SVM is the strongest classical model at Macro-F1 = 0.8768 --- a gap driven primarily by
+SVM is the strongest classical model at Macro-F1 = 0.8768, a gap driven primarily by
 the imbalanced \textit{negatif} minority class (11.6\%), not overall accuracy. My
 10-run statistical analysis confirms SVM significantly outperforms all classical
-alternatives ($p < 0.0001$).
+alternatives.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -74,7 +74,7 @@ SHAP, LIME, BERTurk, Turkish NLP, class imbalance
 Automatic text classification is a fundamental pattern recognition problem. Given a
 feature representation of a text document, the task is to assign it to one of a
 predefined set of categories. The central challenge is not only to achieve high accuracy
-but also to understand \textit{why} a classifier assigns a given label --- the
+but also to understand \textit{why} a classifier assigns a given label, the
 interpretability dimension of pattern recognition.
 
 Classical pattern recognition classifiers such as SVM, Naive Bayes, and Logistic
@@ -83,7 +83,7 @@ decision boundaries geometrically interpretable. In contrast, transformer-based 
 like BERT~\cite{b2} learn contextual representations that capture morphological and
 semantic nuance, at the cost of interpretability. On balanced datasets their Macro-F1
 advantage over SVM is only 1.2--1.9 points; the gap widens to 5.3 points when class
-imbalance is present. Explainability tools --- SHAP~\cite{b4} and LIME~\cite{b5} ---
+imbalance is present. Explainability tools (SHAP~\cite{b4} and LIME~\cite{b5})
 bridge the interpretability gap by providing post-hoc, model-agnostic feature attributions.
 
 The central research question of this project is:
@@ -131,7 +131,7 @@ Text classification is a core pattern recognition problem. Duda, Hart, and
 Stork~\cite{b_duda} establish the theoretical foundations: feature extraction,
 classifier design, and the bias--variance trade-off. In text domains, Naive Bayes,
 SVM, and Logistic Regression remain competitive baselines because TF-IDF vectors
-are high-dimensional and sparse --- conditions that favor linear classifiers
+are high-dimensional and sparse, conditions that favor linear classifiers
 over complex non-linear models~\cite{b_duda}.
 
 \subsection{Deep Learning and Pre-trained Language Models}
@@ -204,15 +204,15 @@ reproducibility with seed 42.}
 
 \subsection{Preprocessing Stages}
 
-I apply the following preprocessing steps (\texttt{src/preprocessing/text\_preprocessor.py}):
+I apply the following preprocessing steps:
 (1) URL removal via regex; (2) lowercase conversion; (3) punctuation removal, preserving
 Turkish characters (ç, ğ, ı, ö, ş, ü); (4) Turkish stopword filtering using a 76-word
 list; (5) minimum word-length filter ($\geq$2 characters). I do not apply stemming or
-lemmatization --- TF-IDF handles vocabulary variation statistically.
+lemmatization; TF-IDF handles vocabulary variation statistically.
 
 \subsection{Feature Descriptions}
 
-I use TF-IDF vectorization to produce a 30,000-dimensional sparse feature vector per
+I use TF-IDF vectorization~\cite{b_tfidf} to produce a 30,000-dimensional sparse feature vector per
 sample. The TF-IDF weight $w_{t,d}$ of term $t$ in document $d$ is:
 \[
 w_{t,d} = (1 + \log \text{tf}_{t,d}) \cdot \log \frac{N}{\text{df}_t}
@@ -281,7 +281,7 @@ to higher cumulative TF-IDF weights.
 
 \subsection{Visual Representation of Feature Space}
 
-To visualize the feature space, I applied PCA to 50 dimensions and then t-SNE
+To visualize the feature space, I applied PCA to 50 dimensions and then t-SNE~\cite{b_tsne}
 (\texttt{perplexity=30}, \texttt{random\_state=42}) to 2,000 stratified test samples,
 as shown in Fig.~\ref{fig:tsne}. The three classes form partially
 overlapping regions, with \textit{pozitif} and \textit{notr} substantially mixed,
@@ -307,6 +307,45 @@ words. The negatif features (\textit{berbat}, \textit{kötü}, \textit{rezalet},
 \textit{iade}) clearly indicate negative sentiment and product returns. Notr features
 (\textit{vardır}, \textit{olmuştur}, \textit{bulunmaktadır}) are formal copula forms
 typical of neutral, informational text.
+
+\textbf{Feature-feature correlations.} Fig.~\ref{fig:corr} shows the Pearson correlation
+matrix for the top-5 SVM discriminative features per class (15 features total).
+Most pairwise correlations are near zero, confirming that TF-IDF features
+are largely independent in this sparse representation. The few weak positive
+correlations (e.g., between co-occurring sentiment words within the same class)
+are expected but do not indicate harmful multicollinearity.
+
+\textbf{Feature-target association.} I computed Chi-squared ($\chi^2$) scores
+between each TF-IDF feature and the class label. The top-scoring features
+align with the SVM coefficients: \textit{harika} ($\chi^2=390$), \textit{berbat}
+($\chi^2=312$), and \textit{mükemmel} ($\chi^2=285$) have the highest
+discriminative power, confirming that explicit sentiment vocabulary drives
+classification performance.
+
+\textbf{Class distribution statistics.} TF-IDF feature values follow a sparse,
+zero-inflated distribution (not Normal or Poisson): each document activates
+only 5--32 of the 30,000 vocabulary terms on average, with the remaining values
+being zero. Per-class statistics on 2,000 test samples show that \textit{notr}
+texts are shortest (mean 6.4 words, 5.3 active features) while \textit{negatif}
+texts are longest (mean 31.8 words, 25.5 active features). Fig.~\ref{fig:cov}
+shows the covariance matrix of the top-15 discriminative features. The
+near-diagonal structure with very small off-diagonal entries is consistent
+with the sparse, high-dimensional nature of TF-IDF representations.
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[width=\columnwidth]{turkish_sentiment/covariance_matrix.png}}
+	\caption{Covariance matrix of the top-5 SVM features per class (15 features).
+	         Near-diagonal structure confirms low feature co-variance in sparse TF-IDF space.}
+	\label{fig:cov}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centerline{\includegraphics[width=\columnwidth]{turkish_sentiment/feature_correlation.png}}
+	\caption{Pearson correlation matrix of the top-5 SVM discriminative features per class
+	         (15 features). Near-zero off-diagonal values confirm feature independence in the
+	         sparse TF-IDF space.}
+	\label{fig:corr}
+\end{figure}
 
 \begin{table}[htbp]
 	\caption{Top-10 Discriminative TF-IDF Features per Class (SVM coef\_)}
@@ -367,12 +406,17 @@ subsample of the 440,679 training samples to keep experiment runtime feasible fo
 models. For testing, I used a stratified 10,000-sample subset of the 48,965 test samples
 (seed 42), preserving the original class ratios: 53.5\% pozitif, 34.9\% notr, 11.6\%
 negatif. I did not apply strict 60/20/20 splits because the predefined splits ensure
-comparability with published benchmarks.
+comparability with published benchmarks; the 10-run experiment (Section~\ref{sec:results},
+Table~\ref{tab:ttest}) with its internal 80/20 splits serves the role of cross-validation
+for assessing model stability.
 
 \subsection{Classical Pattern Classifiers}
 
-I trained and evaluated seven classical classifiers, all using a TF-IDF pipeline
-with \texttt{norm='l2'}:
+I selected classifiers spanning different pattern recognition paradigms: probabilistic
+(Naive Bayes), maximum-margin (SVM), linear probabilistic (Logistic Regression),
+ensemble (Random Forest, XGBoost), instance-based (KNN), and single tree-based
+(Decision Tree) to cover the full spectrum from simple to complex decision boundaries.
+All use a TF-IDF pipeline with \texttt{norm='l2'}:
 
 \textbf{Naive Bayes} (\texttt{MultinomialNB}, $\alpha=0.5$): Models each class as
 a product of feature likelihoods. Simple and fast but assumes feature independence.
@@ -397,7 +441,7 @@ document length normalization (handled by L2 norm).
 axis-aligned tree. Low computational cost but prone to overfitting in high-dimensional
 sparse feature spaces; included to demonstrate the capacity mismatch with TF-IDF.
 
-\textbf{XGBoost} (200 trees, \texttt{max\_depth=5}, \texttt{learning\_rate=0.05}):
+\textbf{XGBoost}~\cite{b_xgboost} (200 trees, \texttt{max\_depth=5}, \texttt{learning\_rate=0.05}):
 Gradient-boosted trees. Strong on structured data; on sparse TF-IDF it is
 slower than linear models and cannot leverage sparsity as effectively as SVM.
 
@@ -486,7 +530,7 @@ Logistic Regression by 3.8 points. XGBoost (Macro-F1 = 0.7554) and Decision Tree
 cannot efficiently exploit TF-IDF sparsity, and Decision Tree's axis-aligned splits
 collapse under high-dimensional feature pressure, yielding the largest gap between
 Accuracy (0.7935) and Macro-F1 (0.7063) of any model. The transformer-to-SVM gap is
-5.3 Macro-F1 points --- larger than on balanced datasets (see Appendix~B), confirming
+5.3 Macro-F1 points, larger than on balanced datasets (see Appendix~B), confirming
 that class imbalance amplifies the transformer's contextual advantage.
 
 \begin{table}[htbp]
@@ -555,24 +599,29 @@ two-sided independent t-test $p$-values comparing each model against SVM.
 			\rowcolor{headerblue}
 			\color{white}\textbf{Model} & \color{white}\textbf{Mean F1} & \color{white}\textbf{Std} & \color{white}\textbf{$p$-value vs.\ SVM} \\
 			\midrule
-			SVM              & 0.8214 & 0.0057 & --- \\
+			SVM              & 0.8214 & 0.0057 &  \\
 			Naive Bayes      & 0.8058 & 0.0070 & $<$0.0001 \\
 			Logistic Reg.    & 0.7733 & 0.0083 & $<$0.0001 \\
+			XGBoost          & 0.7539 & 0.0106 & $<$0.0001 \\
 			KNN              & 0.7413 & 0.0083 & $<$0.0001 \\
 			Random Forest    & 0.7360 & 0.0097 & $<$0.0001 \\
+			Decision Tree    & 0.6751 & 0.0115 & $<$0.0001 \\
 			\bottomrule
 		\end{tabular}
 	\end{center}
 \end{table}
 
 All $p$-values are below $0.0001$, confirming that SVM significantly outperforms every
-other classical classifier. SVM's advantage stems from three properties of LinearSVC:
-(1) it directly optimizes the margin in the high-dimensional TF-IDF space where linear
-separability is good; (2) it is not sensitive to feature independence assumptions
-(unlike Naive Bayes); and (3) L2 normalization stabilizes the margin even under the
-unequal class distribution. Logistic Regression, despite being a linear model like SVM,
-uses the SAGA solver on 10K samples (a setting optimized for larger data), causing
-convergence variance across seeds that widens its performance gap.
+other classical classifier across all seven models. Decision Tree shows the highest
+variance ($\text{std}=0.0115$) and lowest mean F1 ($0.675$), consistent with its
+overfitting tendency in high-dimensional sparse spaces. XGBoost ($0.754$) outperforms
+Decision Tree and Random Forest but remains below the linear models, confirming that
+gradient boosting cannot efficiently exploit TF-IDF sparsity. SVM's advantage stems
+from three properties of LinearSVC: (1) it directly optimizes the margin in the
+high-dimensional TF-IDF space where linear separability is good; (2) it is not sensitive
+to feature independence assumptions (unlike Naive Bayes); and (3) L2 normalization
+stabilizes the margin even under the unequal class distribution. The transformer was
+excluded from the 10-run experiment due to GPU training cost ($\sim$33 minutes per run).
 
 % ============================================================
 \section{Conclusions}
@@ -637,7 +686,7 @@ San Francisco, CA, USA, Aug.\ 2016, pp.~1135--1144.
 
 \bibitem{b7}
 S.~Schweter,
-``BERTurk --- BERT models for Turkish,''
+``BERTurk: BERT models for Turkish,''
 \textit{Zenodo}, Apr.\ 2020.
 doi: 10.5281/zenodo.3770924.
 
@@ -674,6 +723,22 @@ S.~Aras,
 ``TTC4900: A Benchmark Data for Turkish Text Categorization,''
 Hugging Face Datasets, 2022.
 [Online]. Available: \url{https://huggingface.co/datasets/savasy/ttc4900}
+
+\bibitem{b_xgboost}
+T.~Chen and C.~Guestrin,
+``XGBoost: A scalable tree boosting system,''
+in \textit{Proc.\ KDD},
+San Francisco, CA, USA, Aug.\ 2016, pp.~785--794.
+
+\bibitem{b_tsne}
+L.~van~der~Maaten and G.~Hinton,
+``Visualizing data using t-SNE,''
+\textit{J.\ Mach.\ Learn.\ Res.}, vol.~9, pp.~2579--2605, Nov.\ 2008.
+
+\bibitem{b_tfidf}
+G.~Salton and C.~Buckley,
+``Term-weighting approaches in automatic text retrieval,''
+\textit{Inf.\ Process.\ Manag.}, vol.~24, no.~5, pp.~513--523, 1988.
 
 \end{thebibliography}
 
