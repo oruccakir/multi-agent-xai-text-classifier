@@ -108,12 +108,6 @@ class FeatureExtractor:
             return self.vectorizer.get_feature_names_out().tolist()
         return []
 
-    def get_vocabulary_size(self) -> int:
-        """Get the size of the vocabulary."""
-        if self.method == "tfidf" and self.vectorizer is not None:
-            return len(self.vectorizer.vocabulary_)
-        return 0
-
     def save(self, path: str) -> None:
         """Save the feature extractor to disk."""
         path = Path(path)

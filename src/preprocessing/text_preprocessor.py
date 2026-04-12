@@ -148,12 +148,6 @@ class TextPreprocessor:
         translator = str.maketrans("", "", string.punctuation)
         return text.translate(translator)
 
-    def _remove_stopwords(self, text: str) -> str:
-        """Remove stopwords from text."""
-        words = text.split()
-        filtered_words = [w for w in words if w not in self.stopwords]
-        return " ".join(filtered_words)
-
     def _remove_urls(self, text: str) -> str:
         """Remove URLs from text."""
         # Match http, https, www URLs

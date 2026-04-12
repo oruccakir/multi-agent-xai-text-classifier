@@ -43,7 +43,7 @@ st.set_page_config(
 MODELS_DIR = project_root / "data" / "models"
 
 # Available models (sklearn models that use TF-IDF)
-SKLEARN_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression"]
+SKLEARN_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression", "xgboost", "decision_tree"]
 AVAILABLE_MODELS = SKLEARN_MODELS + ["transformer"]
 
 # Example texts for quick testing
@@ -66,6 +66,8 @@ MODEL_DISPLAY_NAMES = {
     "random_forest": "Random Forest",
     "knn": "KNN",
     "logistic_regression": "Logistic Regression",
+    "xgboost": "XGBoost",
+    "decision_tree": "Decision Tree",
     "transformer": "Transformer",
 }
 

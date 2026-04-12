@@ -218,36 +218,6 @@ class ClassificationAgent(BaseAgent):
 
         return results
 
-    def get_available_models(self, experiment_path: str, dataset: str) -> List[str]:
-        """
-        Get list of available trained models for a dataset.
-
-        Args:
-            experiment_path: Path to experiment directory
-            dataset: Dataset name
-
-        Returns:
-            List of available model names
-        """
-        sklearn_models = [
-            "naive_bayes", "svm", "random_forest", "knn", "logistic_regression", "xgboost", "decision_tree"
-        ]
-        dataset_path = Path(experiment_path) / dataset
-
-        if not dataset_path.exists():
-            return []
-
-        found = [
-            model_name for model_name in sklearn_models
-            if (dataset_path / f"{model_name}.pkl").exists()
-        ]
-
-        # Check for transformer model (saved as directory)
-        if (dataset_path / "transformer.dir").exists():
-            found.append("transformer")
-
-        return found
-
     def _load_model(
         self, experiment_path: str, dataset: str, model_name: str, device: str = None
     ) -> Optional[Any]:
@@ -318,8 +288,3 @@ class ClassificationAgent(BaseAgent):
 
         return self._preprocessors_cache[language]
 
-    def clear_cache(self) -> None:
-        """Clear all cached models and feature extractors."""
-        self._models_cache.clear()
-        self._feature_extractors_cache.clear()
-        self._preprocessors_cache.clear()

@@ -1,6 +1,6 @@
 """Hardware detection utilities for device selection."""
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 import torch
 
 

@@ -61,30 +61,3 @@ class TextClassificationPipeline:
             "explanation": explanation,
         }
 
-    def train(self, dataset_name: str, model_name: str = None) -> Dict[str, Any]:
-        """
-        Train models on a specific dataset.
-
-        Args:
-            dataset_name: Name of the dataset to train on
-            model_name: Specific model to train (or all if None)
-
-        Returns:
-            Training metrics and results
-        """
-        # TODO: Implement training pipeline
-        raise NotImplementedError("Training pipeline not yet implemented")
-
-    def evaluate(self, dataset_name: str, model_name: str = None) -> Dict[str, Any]:
-        """
-        Evaluate models on a specific dataset.
-
-        Args:
-            dataset_name: Name of the dataset to evaluate on
-            model_name: Specific model to evaluate (or all if None)
-
-        Returns:
-            Evaluation metrics
-        """
-        # TODO: Implement evaluation pipeline
-        raise NotImplementedError("Evaluation pipeline not yet implemented")

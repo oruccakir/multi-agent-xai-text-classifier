@@ -34,7 +34,7 @@ st.set_page_config(
 MODELS_DIR = project_root / "data" / "models"
 
 # Available models
-AVAILABLE_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression"]
+AVAILABLE_MODELS = ["naive_bayes", "svm", "random_forest", "knn", "logistic_regression", "xgboost", "decision_tree"]
 
 MODEL_DISPLAY_NAMES = {
     "naive_bayes": "Naive Bayes",
@@ -42,6 +42,8 @@ MODEL_DISPLAY_NAMES = {
     "random_forest": "Random Forest",
     "knn": "KNN",
     "logistic_regression": "Logistic Regression",
+    "xgboost": "XGBoost",
+    "decision_tree": "Decision Tree",
 }
 
 # Initialize session state

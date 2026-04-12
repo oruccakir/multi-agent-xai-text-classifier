@@ -234,17 +234,3 @@ Provide your analysis with confidence score (0.0 to 1.0) and brief reasoning."""
             # Default to sentiment for Turkish
             return "sentiment", "turkish_sentiment"
 
-    def detect_language(self, text: str) -> str:
-        """Detect if text is Turkish or English."""
-        result = self.process(text)
-        return result["language"]
-
-    def detect_domain(self, text: str) -> str:
-        """Detect the domain/context of the text (sentiment, news, etc.)."""
-        result = self.process(text)
-        return result["domain"]
-
-    def get_recommended_dataset(self, text: str) -> str:
-        """Get the recommended dataset for the given text."""
-        result = self.process(text)
-        return result["dataset"]

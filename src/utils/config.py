@@ -1,7 +1,6 @@
 """Configuration management for the project."""
 
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Dict, List, Optional
 import yaml
 
