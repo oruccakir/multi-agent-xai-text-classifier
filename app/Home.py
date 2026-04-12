@@ -188,7 +188,7 @@ def main():
         st.markdown("""
         <div class="feature-card card-green">
             <h4>⚖️ Model Comparison</h4>
-            <p>Compare all 6 models</p>
+            <p>Compare all 8 models</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -226,6 +226,8 @@ def main():
         | Random Forest | Ensemble |
         | KNN | Instance-based |
         | Logistic Regression | Linear |
+        | XGBoost | Ensemble (Boosting) |
+        | Decision Tree | Tree-based |
         | Transformer | Deep Learning |
         """)
 
