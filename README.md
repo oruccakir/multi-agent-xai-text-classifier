@@ -172,7 +172,6 @@ The app includes six pages:
 ├── app/                   # Streamlit UI (Home.py + 6 pages)
 ├── configs/               # YAML experiment configs per dataset
 ├── data/                  # Raw and processed data
-├── notebooks/             # Exploratory analysis
 ├── reports/
 │   └── pattern_recognition/       # IEEE paper (sample_report.tex/.pdf)
 │       ├── imdb/          # IMDB result plots
